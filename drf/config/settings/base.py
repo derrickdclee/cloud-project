@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': str(ROOT_DIR.path('db.sqlite3')),
     }
 }
 
@@ -132,3 +132,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = str(ROOT_DIR('staticfiles'))
+
+STATICFILES_DIRS = (
+    str(APPS_DIR.path('static'))
+)
+
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder'
+)
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = str(APPS_DIR('media'))
