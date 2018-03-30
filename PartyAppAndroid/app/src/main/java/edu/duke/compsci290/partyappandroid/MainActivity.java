@@ -36,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (AccessToken.getCurrentAccessToken()!=null){
+            goToPartyModesAsUser();
+        }
         callbackManager = CallbackManager.Factory.create();
         loginButton = (LoginButton) findViewById(R.id.login_button);
         loginButton.setReadPermissions(Arrays.asList(EMAIL));
@@ -49,33 +52,6 @@ public class MainActivity extends AppCompatActivity {
                 // App code
                 boolean loggedIn = AccessToken.getCurrentAccessToken() == null;
                 Log.d("CHECKFORLOGIN", AccessToken.getCurrentAccessToken()+"");
-                /*
-                GraphRequest request = GraphRequest.newMeRequest(
-                        loginResult.getAccessToken(),
-                        new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(JSONObject object, GraphResponse response) {
-                                Log.v("LoginActivity", response.toString());
-                                // Application code
-                                try {
-                                    String id = object.getString("id");
-                                    String email = object.getString("email");
-                                    String name = object.getString("name");
-                                    mUser = new User(id, name, email);
-                                    Log.d("USERID", id);
-                                    Log.d("USEREMAIL", email);
-                                    Log.d("USERNAME", name);
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                                goToPartyModesAsUser();
-                            }
-                        });
-
-                Bundle parameters = new Bundle();
-                parameters.putString("fields", "id,name,email");
-                request.setParameters(parameters);
-                request.executeAsync();*/
                 goToPartyModesAsUser();
             }
 
@@ -108,8 +84,17 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (AccessToken.getCurrentAccessToken()!=null){
+            goToPartyModesAsUser();
+        }
+    }
+
     private void goToPartyModesAsUser(){
         Intent intent = new Intent(this, PartyModesActivity.class);
+        this.startActivity(intent);
 
     }
     private void bypass(){
