@@ -54,7 +54,13 @@
         <activity android:name=".HostActivity" />
         <activity android:name=".AddPartyActivity" />
         <activity android:name=".HostPartyActivity" />
-        <activity android:name=".PartyScanActivity"></activity>
+        <activity android:name=".PartyScanActivity">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
