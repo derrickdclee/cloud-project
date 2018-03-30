@@ -86,7 +86,7 @@ public class HostAdapter extends RecyclerView.Adapter<HostAdapter.ViewHolder> {
 
     }
     private void goToScannerActivity(Party party){
-        Intent intent = new Intent(mContext, HostPartyActivity.class);
+        Intent intent = new Intent(mContext, PartyScanActivity.class);
         intent.putExtra("party_object", (Serializable) party);
         mContext.startActivity(intent);
     }
