@@ -46,11 +46,11 @@ DJANGO_APPS = (
 )
 
 THIRD_PARTY_APPS = (
-    'rest_framework'
+    'rest_framework',
 )
 
 LOCAL_APPS = (
-    'project.api'
+    'project.api',
 )
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -138,12 +138,12 @@ STATIC_URL = '/static/'
 STATIC_ROOT = str(ROOT_DIR('staticfiles'))
 
 STATICFILES_DIRS = (
-    str(APPS_DIR.path('static'))
+    str(APPS_DIR.path('static')),
 )
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder'
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
 MEDIA_URL = '/media/'
