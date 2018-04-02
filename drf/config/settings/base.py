@@ -158,6 +158,8 @@ MEDIA_ROOT = str(APPS_DIR('media'))
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication', # TODO: should be left in?
+        'rest_framework.authentication.SessionAuthentication', # TODO: and this one?
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ),
