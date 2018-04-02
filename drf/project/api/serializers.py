@@ -2,20 +2,22 @@ from django.contrib.auth.models import User, Group
 from project.api.models import Party
 from rest_framework import serializers
 
+
 class PartySerializer(serializers.ModelSerializer):
+    host = serializers.ReadOnlyField(source='host.username')
+
     class Meta:
         model = Party
-        host = serializers.ReadOnlyField(source='host.username')
         fields = ('name', 'description', 'location', 'start_time',
-                  'end_time', 'deleted', 'host')
+                  'end_time', 'deleted', 'host',)
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     parties = serializers.PrimaryKeyRelatedField(many=True, queryset=Party.objects.all())
 
     class Meta:
         model = User
-        fields = ('url', 'username', 'email', 'parties')
+        fields = ('username', 'email', 'parties',)
 #
 # class GroupSerializer(serializers.HyperlinkedModelSerializer):
 #     class Meta:
