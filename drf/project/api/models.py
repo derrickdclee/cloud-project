@@ -14,3 +14,8 @@ class Party(models.Model):
 
     class Meta:
         verbose_name_plural = 'Parties'
+
+# class Invitation(models.Model):
+#     # user = models.ForeignKey(
+#     #     ''
+#     # )
