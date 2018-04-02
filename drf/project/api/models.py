@@ -5,6 +5,7 @@ from django.db import models
 
 # Create your models here.
 class Party(models.Model):
+    host = models.ForeignKey('auth.User', related_name='parties', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField()
     location = models.CharField(max_length=100)
