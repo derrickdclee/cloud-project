@@ -7,7 +7,7 @@ class PartySerializer(serializers.ModelSerializer):
         model = Party
         host = serializers.ReadOnlyField(source='host.username')
         fields = ('name', 'description', 'location', 'start_time',
-                  'end_time', 'deleted')
+                  'end_time', 'deleted', 'host')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
