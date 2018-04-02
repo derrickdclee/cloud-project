@@ -1,6 +1,8 @@
 package edu.duke.compsci290.partyappandroid;
 
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.nfc.NfcAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -70,7 +72,6 @@ public class HostActivity extends AppCompatActivity {
                         }
 
                         getUserFriends(id);
-                        fuckWithProfilePic(id);
                     }
                 });
         Bundle parameters = new Bundle();
@@ -113,19 +114,27 @@ public class HostActivity extends AppCompatActivity {
 
         request.executeAsync();
     }
-    private void fuckWithProfilePic(String userId){
-        Log.d("PROFILEPIC", "is this code being hit");
-        final GraphRequest request = GraphRequest.newGraphPathRequest(
-                AccessToken.getCurrentAccessToken(),
-                "/" + userId + "/picture",
-                new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        Log.d("PROFILEPIC", response.toString());
-                    }
-                });
 
-        request.executeAsync();
+
+    public void onResume() {
+        super.onResume();
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+        nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
     }
+
+    public void onPause() {
+        super.onPause();
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        nfcAdapter.disableForegroundDispatch(this);
+    }
+
+    public void onNewIntent(Intent intent) {
+        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+            // drop NFC events
+
+        }
+    }
+
 
 }

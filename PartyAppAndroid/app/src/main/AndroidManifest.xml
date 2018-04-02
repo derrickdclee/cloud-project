@@ -57,10 +57,14 @@
         <activity android:name=".PartyScanActivity">
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT"/>
+
+                <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+        <activity android:name=".PartyCheckInActivity" />
+        <activity android:name=".InviteeActivity"></activity>
     </application>
 
 </manifest>

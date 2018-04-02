@@ -24,6 +24,12 @@ public class PartyModesActivity extends AppCompatActivity {
                 goToHostMode();
             }
         });
+        mInviteeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToInviteeMode();
+            }
+        });
         mBouncerButton.setText("Bouncer Mode");
         mInviteeButton.setText("Invitee Mode");
     }
@@ -31,4 +37,9 @@ public class PartyModesActivity extends AppCompatActivity {
         Intent intent = new Intent(this, HostActivity.class);
         this.startActivity(intent);
     }
+    private void goToInviteeMode(){
+        Intent intent = new Intent(this, PartyCheckInActivity.class);
+        this.startActivity(intent);
+    }
+
 }
