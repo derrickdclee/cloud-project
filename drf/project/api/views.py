@@ -7,6 +7,7 @@ from rest_framework import permissions
 from project.api.models import Party
 from django.contrib.auth.models import User
 from project.api.serializers import PartySerializer, UserSerializer
+from project.api.permissions import IsSameUser
 
 
 class PartyList(generics.ListCreateAPIView):
@@ -32,3 +33,5 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = (IsSameUser,)
+
