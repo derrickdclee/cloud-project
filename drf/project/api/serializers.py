@@ -1,5 +1,5 @@
-from django.contrib.auth.models import User, Group
-from project.api.models import Party
+from django.contrib.auth.models import User
+from project.api.models import Party, Invitation
 from rest_framework import serializers
 
 
@@ -18,10 +18,14 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email', 'parties',)
-#
-# class GroupSerializer(serializers.HyperlinkedModelSerializer):
-#     class Meta:
-#         model = Group
-#         fields = ('url', 'name')
+
+
+class InvitationSerializer(serializers.ModelSerializer):
+	invitee = serializers.ReadOnlyField(source='invitee.username')
+	party = serializers.ReadOnlyField(source='party.name')
+
+	class Meta:
+		model = Invitation
+		fields = ('invitee', 'party', 'has_rsvped', 'has_checkedin',)
 
 

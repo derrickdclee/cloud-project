@@ -16,7 +16,10 @@ class Party(models.Model):
     class Meta:
         verbose_name_plural = 'Parties'
 
-# class Invitation(models.Model):
-#     # user = models.ForeignKey(
-#     #     ''
-#     # )
+
+class Invitation(models.Model):
+    invitee = models.ForeignKey('auth.User', related_name='invitations', 
+    	on_delete=models.CASCADE)
+    party = models.ForeignKey('Party', related_name='invitations', on_delete=models.CASCADE)
+    has_rsvped = models.BooleanField(default=False)
+    has_checkedin = models.BooleanField(default=False)
