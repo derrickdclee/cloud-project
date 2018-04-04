@@ -5,12 +5,11 @@ from rest_framework import serializers
 
 class PartySerializer(serializers.ModelSerializer):
     host = serializers.ReadOnlyField(source='host.username')
-    invitations = serializers.PrimaryKeyRelatedField(many=True, queryset=Invitation.objects.all())
 
     class Meta:
         model = Party
         fields = ('name', 'description', 'location', 'start_time',
-                  'end_time', 'deleted', 'host', 'invitations',)
+                  'end_time', 'deleted', 'host',)
 
 
 class UserSerializer(serializers.ModelSerializer):
