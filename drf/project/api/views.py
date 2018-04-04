@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
@@ -51,3 +52,17 @@ class InvitationList(generics.ListCreateAPIView):
 class InvitationDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
+
+
+class HostedPartyList(generics.ListAPIView):
+    serializer_class = PartySerializer
+
+    def get_queryset(self):
+        host_id = self.kwargs['host_id']
+        return Party.objects.filter(host_id=host_id)
+#
+#
+# class InvitedPartyList(generics.ListAPIView):
+#     serializer_class = PartySerializer
+#
+#     def get_queryset(self):
