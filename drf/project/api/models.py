@@ -6,6 +6,7 @@ from django.db import models
 
 class Party(models.Model):
     host = models.ForeignKey('auth.User', related_name='parties', on_delete=models.CASCADE)
+    invitees = models.ManyToManyField('auth.User', through='Invitation')
     name = models.CharField(max_length=100)
     description = models.TextField()
     location = models.CharField(max_length=100)
