@@ -1,5 +1,7 @@
 package edu.duke.compsci290.partyappandroid;
 
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
@@ -11,10 +13,14 @@ import android.util.Log;
 
 import java.nio.charset.Charset;
 
+import edu.duke.compsci290.partyappandroid.EventPackage.Party;
+import edu.duke.compsci290.partyappandroid.EventPackage.User;
+
 public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapter.OnNdefPushCompleteCallback, NfcAdapter.CreateNdefMessageCallback{
 
     private NfcAdapter mNfcAdapter;
     private boolean mHasSentMessage;
+    private User mUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +28,8 @@ public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapte
         setContentView(R.layout.activity_party_check_in);
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
         mHasSentMessage = false;
+        Intent intent = this.getIntent();
+        mUser = (User) intent.getSerializableExtra("user_object");
         if(mNfcAdapter != null) {
             //This will refer back to createNdefMessage for what it will send
             mNfcAdapter.setNdefPushMessageCallback(this, this);
@@ -49,7 +57,7 @@ public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapte
         NdefRecord[] records = new NdefRecord[2];
         //To Create Messages Manually if API is less than
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            String messageToSend = "This is a test message";
+            String messageToSend = mUser.getUserId();
             byte[] payload = messageToSend.
                     getBytes(Charset.forName("UTF-8"));
             NdefRecord record = new NdefRecord(
@@ -62,7 +70,7 @@ public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapte
         //Api is high enough that we can use createMime, which is preferred.
         else {
 
-            String messageToSend = "This is a test message";
+            String messageToSend = mUser.getUserId();
             byte[] payload = messageToSend.
                     getBytes(Charset.forName("UTF-8"));
 
@@ -77,5 +85,26 @@ public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapte
     @Override
     public void onNdefPushComplete(NfcEvent nfcEvent) {
         Log.d("NFCSent", "Successfully sent");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+        nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        nfcAdapter.disableForegroundDispatch(this);
+    }
+    @Override
+    public void onNewIntent(Intent intent) {
+        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+            // drop NFC events
+
+        }
     }
 }
