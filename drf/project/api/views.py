@@ -64,7 +64,7 @@ class HostedPartyList(generics.ListAPIView):
 
     def get_queryset(self):
         host_id = self.kwargs['host_id']
-        return Party.objects.filter(host_id=host_id)
+        return Party.objects.filter(host=host_id)
 
 
 class InvitedPartyList(generics.ListAPIView):
@@ -73,6 +73,14 @@ class InvitedPartyList(generics.ListAPIView):
     def get_queryset(self):
         invitee_id = self.kwargs['invitee_id']
         """
-        note this weird syntax for filtering on ManyToManyField
+        note this weird '__in' syntax for filtering on ManyToManyField
         """
         return Party.objects.filter(invitees__in=invitee_id)
+
+
+class InvitationToPartyList(generics.ListAPIView):
+    serializer_class = InvitationSerializer
+
+    def get_queryset(self):
+        party_id = self.kwargs['party_id']
+        return Invitation.objects.filter(party=party_id)

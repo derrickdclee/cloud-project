@@ -26,5 +26,3 @@ class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation
         fields = ('invitee', 'party', 'has_rsvped', 'has_checkedin',)
-
-
