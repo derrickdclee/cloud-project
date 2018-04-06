@@ -7,11 +7,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 
+from project.api.permissions import IsSameUser, IsHostOrInvitee
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
 from project.api.serializers import PartySerializer, \
     UserSerializer, InvitationSerializer
-from project.api.permissions import IsHostOrInvitee
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -45,7 +45,7 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # TODO: Permission class
+    permission_classes = (IsSameUser,)
 
 
 class InvitationList(generics.ListCreateAPIView):
