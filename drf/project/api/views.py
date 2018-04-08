@@ -7,12 +7,11 @@ from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_condition import And, Or, Not
 
-from project.api.permissions import IsGetRequest, IsHostOfParty, \
-    IsSameUser, IsHostOrInvitee, IsSameUserWithParam
+from project.api.permissions import IsGetRequest, IsHostOfParty, IsSameUser, \
+    IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
-from project.api.serializers import PartySerializer, \
-    UserSerializer, InvitationSerializer
+from project.api.serializers import PartySerializer, UserSerializer, InvitationSerializer
 
 
 @api_view(['GET'])
@@ -55,7 +54,7 @@ class InvitationList(generics.ListCreateAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
     permission_classes = (Or(permissions.IsAdminUser,
-                             And(permissions.IsAuthenticated, Not(IsGetRequest))),)
+                             And(IsHostOfInvitation, Not(IsGetRequest))),)
 
     # this is a hook, called when creating an instance
     # need to override this method as we are writing to ReadOnlyField
