@@ -1,13 +1,9 @@
 from rest_framework import permissions
 
 
-class IsHost(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        return obj.host == request.user
+class IsGetRequest(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.method == 'GET'
 
 
 class IsSameUser(permissions.BasePermission):
@@ -19,6 +15,25 @@ class IsSameUser(permissions.BasePermission):
         return obj == request.user
 
 
+class IsSameUserWithParam(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_permission(self, request, view):
+        # very hacky solution..
+        return int(view.kwargs['user_id']) == request.user.pk
+
+
+class IsHostOfParty(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return obj.host == request.user
+
+
 class IsHostOrInvitee(permissions.BasePermission):
     """
     TODO: not very OO...
@@ -26,7 +41,4 @@ class IsHostOrInvitee(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        is_admin = request.user and request.user.is_staff
-        return (obj.party.host == request.user) \
-               or (obj.invitee == request.user)\
-               or is_admin
+        return (obj.party.host == request.user) or (obj.invitee == request.user)

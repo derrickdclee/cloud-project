@@ -10,14 +10,12 @@ urlpatterns = [
     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view()),
     url(r'^invitations/$', views.InvitationList.as_view()),
     url(r'^invitations/(?P<pk>[0-9]+)/$', views.InvitationDetail.as_view()),
-    url(r'^parties/hosted/(?P<host_id>[0-9]+)/$', views.HostedPartyList.as_view()),
-    url(r'^parties/invited/(?P<invitee_id>[0-9]+)/$',
+    url(r'^parties/hosted/(?P<user_id>[0-9]+)/$', views.HostedPartyList.as_view()),
+    url(r'^parties/invited/(?P<user_id>[0-9]+)/$',
         views.InvitedPartyList.as_view()),
-    url(r'^invitations/toparty/(?P<party_id>[0-9]+)/$',
+    url(r'^invitations/to-party/(?P<party_id>[0-9]+)/$',
         views.InvitationToPartyList.as_view()),
 ]
 
-"""
-GET /invitations/toparty/:party_id
-"""
+
 urlpatterns = format_suffix_patterns(urlpatterns)

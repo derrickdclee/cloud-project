@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from rest_framework import generics, permissions, status
-from rest_framework.views import APIView
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
+from rest_condition import And, Or, Not
 
-from project.api.permissions import IsSameUser, IsHostOrInvitee
+from project.api.permissions import IsGetRequest, IsHostOfParty, \
+    IsSameUser, IsHostOrInvitee, IsSameUserWithParam
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
 from project.api.serializers import PartySerializer, \
     UserSerializer, InvitationSerializer
+
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -24,7 +26,8 @@ def api_root(request, format=None):
 class PartyList(generics.ListCreateAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (Or(permissions.IsAdminUser,
+                             And(permissions.IsAuthenticated, Not(IsGetRequest))),)
 
     def perform_create(self, serializer):
         serializer.save(host=self.request.user)
@@ -33,7 +36,7 @@ class PartyList(generics.ListCreateAPIView):
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    # TODO: Permission class
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOfParty), )
 
 
 class UserList(generics.ListAPIView):
@@ -45,13 +48,14 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsSameUser,)
+    permission_classes = (Or(permissions.IsAdminUser, IsSameUser),)
 
 
 class InvitationList(generics.ListCreateAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (Or(permissions.IsAdminUser,
+                             And(permissions.IsAuthenticated, Not(IsGetRequest))),)
 
     # this is a hook, called when creating an instance
     # need to override this method as we are writing to ReadOnlyField
@@ -64,22 +68,24 @@ class InvitationList(generics.ListCreateAPIView):
 class InvitationDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = (IsHostOrInvitee,)
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOrInvitee),)
 
 
 class HostedPartyList(generics.ListAPIView):
     serializer_class = PartySerializer
+    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithParam),)
 
     def get_queryset(self):
-        host_id = self.kwargs['host_id']
+        host_id = self.kwargs['user_id']
         return Party.objects.filter(host=host_id)
 
 
 class InvitedPartyList(generics.ListAPIView):
     serializer_class = PartySerializer
+    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithParam),)
 
     def get_queryset(self):
-        invitee_id = self.kwargs['invitee_id']
+        invitee_id = self.kwargs['user_id']
         """
         note this weird '__in' syntax for filtering on ManyToManyField
         """
@@ -88,6 +94,8 @@ class InvitedPartyList(generics.ListAPIView):
 
 class InvitationToPartyList(generics.ListAPIView):
     serializer_class = InvitationSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    #TODO: improve this permission
 
     def get_queryset(self):
         party_id = self.kwargs['party_id']
