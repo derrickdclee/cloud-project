@@ -57,7 +57,7 @@ class InvitationList(generics.ListCreateAPIView):
                              And(IsHostOfInvitation, Not(IsGetRequest))),)
 
     # this is a hook, called when creating an instance
-    # need to override this method as we are writing to ReadOnlyField
+    # we need to override this method as we are writing to a ReadOnlyField
     def perform_create(self, serializer):
         invitee = User.objects.get(pk=self.request.data['invitee_id'])
         party = Party.objects.get(pk=self.request.data['party_id'])

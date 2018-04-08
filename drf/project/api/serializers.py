@@ -13,6 +13,11 @@ class PartySerializer(serializers.ModelSerializer):
     host = serializers.ReadOnlyField(source='host.username')
     invitees = UserSerializer(many=True, read_only=True)
 
+    def validate(self, data):
+        if data['start_time'] > data['end_time']:
+            raise serializers.ValidationError("Start time cannot be later than end time.")
+        return data
+
     class Meta:
         model = Party
         fields = ('name', 'description', 'location', 'start_time',

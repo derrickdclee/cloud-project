@@ -22,8 +22,7 @@ class Party(models.Model):
 
 
 class Invitation(models.Model):
-    invitee = models.ForeignKey('auth.User', related_name='invitations',
-    	on_delete=models.CASCADE)
+    invitee = models.ForeignKey('auth.User', related_name='invitations', on_delete=models.CASCADE)
     party = models.ForeignKey('Party', related_name='invitations', on_delete=models.CASCADE)
     has_rsvped = models.BooleanField(default=False)
     has_checkedin = models.BooleanField(default=False)
