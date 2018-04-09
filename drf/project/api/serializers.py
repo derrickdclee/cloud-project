@@ -6,10 +6,15 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', )
+        fields = ('id', 'username', 'email', )
 
 
 class PartySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Party
+        fields = ('id', 'host', 'invitees', 'name', 'description', 'location', 'start_time', 'end_time', 'deleted',)
+
+    id = serializers.ReadOnlyField()
     host = serializers.ReadOnlyField(source='host.username')
     invitees = UserSerializer(many=True, read_only=True)
 
@@ -18,16 +23,12 @@ class PartySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Start time cannot be later than end time.")
         return data
 
-    class Meta:
-        model = Party
-        fields = ('name', 'description', 'location', 'start_time',
-                  'end_time', 'deleted', 'host', 'invitees',)
-
 
 class InvitationSerializer(serializers.ModelSerializer):
-    invitee = serializers.ReadOnlyField(source='invitee.username')
-    party = serializers.ReadOnlyField(source='party.name')
-
     class Meta:
         model = Invitation
-        fields = ('invitee', 'party', 'has_rsvped', 'has_checkedin',)
+        fields = ('id', 'invitee', 'party', 'has_rsvped', 'has_checkedin',)
+
+    id = serializers.ReadOnlyField()
+    invitee = serializers.ReadOnlyField(source='invitee.username')
+    party = serializers.ReadOnlyField(source='party.name')
