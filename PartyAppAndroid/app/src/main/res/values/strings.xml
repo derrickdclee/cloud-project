@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">PartyAppAndroid</string>
-    <string name="facebook_app_id">***REMOVED***</string>
-    <string name="fb_login_protocol_scheme">fb***REMOVED***</string>
+    <string name="facebook_app_id">179815432823317</string>
+    <string name="fb_login_protocol_scheme">fb179815432823317</string>
 </resources>
