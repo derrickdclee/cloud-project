@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from project.api.models import Party, Invitation
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -28,6 +29,12 @@ class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation
         fields = ('id', 'invitee', 'party', 'has_rsvped', 'has_checkedin',)
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Invitation.objects.all(),
+                fields=('invitee', 'party')
+            )
+        ]
 
     id = serializers.ReadOnlyField()
     invitee = serializers.ReadOnlyField(source='invitee.username')
