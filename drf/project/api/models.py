@@ -13,7 +13,8 @@ class Party(models.Model):
     invitees = models.ManyToManyField('auth.User', through='Invitation')
     name = models.CharField(max_length=100)
     description = models.TextField()
-    location = models.CharField(max_length=100)
+    lat = models.DecimalField(max_digits=9, decimal_places=6, null=True)
+    lng = models.DecimalField(max_digits=9, decimal_places=6, null=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     deleted = models.BooleanField(default=False)
@@ -23,6 +24,9 @@ class Party(models.Model):
 
 
 class Invitation(models.Model):
+    class Meta:
+        unique_together = ("invitee", "party")
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     invitee = models.ForeignKey('auth.User', related_name='invitations', on_delete=models.CASCADE, editable=False)
     party = models.ForeignKey('Party', related_name='invitations', on_delete=models.CASCADE, editable=False)
