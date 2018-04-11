@@ -8,7 +8,7 @@ class IsAdmin(permissions.IsAdminUser):
         return True
 
     def has_object_permission(self, request, view, obj):
-        super(IsAdmin, self).has_permission(request, view)
+        return super(IsAdmin, self).has_permission(request, view)
 
 
 class IsGetRequest(permissions.BasePermission):
