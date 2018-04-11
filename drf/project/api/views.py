@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_condition import And, Or, Not
 
-from project.api.permissions import IsGetRequest, IsHostOfParty, IsSameUser, \
+from project.api.permissions import IsAdmin, IsGetRequest, IsHostOfParty, IsSameUser, \
     IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
@@ -25,8 +25,7 @@ def api_root(request, format=None):
 class PartyList(generics.ListCreateAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    permission_classes = (Or(permissions.IsAdminUser,
-                             And(permissions.IsAuthenticated, Not(IsGetRequest))),)
+    permission_classes = (Or(permissions.IsAdminUser, And(permissions.IsAuthenticated, Not(IsGetRequest))),)
 
     def perform_create(self, serializer):
         serializer.save(host=self.request.user)
@@ -35,7 +34,7 @@ class PartyList(generics.ListCreateAPIView):
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    permission_classes = (Or(permissions.IsAdminUser, IsHostOfParty), )
+    permission_classes = (Or(IsAdmin, IsHostOfParty), )
 
 
 class UserList(generics.ListAPIView):
@@ -47,14 +46,13 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (Or(permissions.IsAdminUser, IsSameUser),)
+    permission_classes = (Or(IsAdmin, IsSameUser), )
 
 
 class InvitationList(generics.ListCreateAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = (Or(permissions.IsAdminUser,
-                             And(IsHostOfInvitation, Not(IsGetRequest))),)
+    permission_classes = (Or(permissions.IsAdminUser, And(IsHostOfInvitation, Not(IsGetRequest))),)
 
     # this is a hook, called when creating an instance
     # we need to override this method as we are writing to a ReadOnlyField
@@ -67,7 +65,7 @@ class InvitationList(generics.ListCreateAPIView):
 class InvitationDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = (Or(permissions.IsAdminUser, IsHostOrInvitee),)
+    permission_classes = (Or(IsAdmin, IsHostOrInvitee),)
 
 
 class HostedPartyList(generics.ListAPIView):

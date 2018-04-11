@@ -3,6 +3,14 @@ from django.contrib.auth.models import User
 from project.api.models import Party
 
 
+class IsAdmin(permissions.IsAdminUser):
+    def has_permission(self, request, view):
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        super(IsAdmin, self).has_permission(request, view)
+
+
 class IsGetRequest(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.method == 'GET'
