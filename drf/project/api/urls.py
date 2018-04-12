@@ -6,6 +6,7 @@ urlpatterns = [
     url(r'^$', views.api_root),
     url(r'^parties/$', views.PartyList.as_view(), name='party-list'),
     url(r'^parties/(?P<pk>[0-9]+)/$', views.PartyDetail.as_view()),
+    url(r'^parties/(?P<pk>[0-9]+)/bouncers/$', views.BouncerList.as_view()),
     url(r'^users/$', views.UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view()),
     url(r'^invitations/$', views.InvitationList.as_view()),

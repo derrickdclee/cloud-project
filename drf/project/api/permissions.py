@@ -53,6 +53,16 @@ class IsHostOfParty(permissions.BasePermission):
         return obj.host == request.user
 
 
+class IsHostOfPartyWithParam(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_permission(self, request, view):
+        party = Party.objects.get(pk=view.kwargs['pk'])
+        return party.host == request.user
+
+
 class IsHostOrInvitee(permissions.BasePermission):
     """
     TODO: not very OO...
@@ -61,3 +71,10 @@ class IsHostOrInvitee(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return (obj.party.host == request.user) or (obj.invitee == request.user)
+
+
+class IsHostOrBouncer(permissions.BasePermission):
+    def has_permission(self, request, view):
+        party = Party.objects.get(pk=view.kwargs['party_id'])
+        # note that we need .all() on manytomanyfields
+        return party.host == request.user or request.user in party.bouncers.all()

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_condition import And, Or, Not
 
 from project.api.permissions import IsAdmin, IsGetRequest, IsHostOfParty, IsSameUser, \
-    IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation
+    IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation, IsHostOfPartyWithParam, IsHostOrBouncer
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
 from project.api.serializers import PartySerializer, UserSerializer, InvitationSerializer
@@ -35,6 +36,17 @@ class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
     permission_classes = (Or(IsAdmin, IsHostOfParty), )
+
+
+class BouncerList(APIView):
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithParam),)
+
+    def post(self, request, *args, **kwargs):
+        party = Party.objects.get(pk=kwargs['pk'])
+        bouncer = User.objects.get(pk=request.data['bouncer_id'])
+        party.bouncers.add(bouncer)
+        serializer = PartySerializer(party)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UserList(generics.ListAPIView):
@@ -91,10 +103,8 @@ class InvitedPartyList(generics.ListAPIView):
 
 class InvitationToPartyList(generics.ListAPIView):
     serializer_class = InvitationSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    #TODO: improve this permission
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOrBouncer), )
 
     def get_queryset(self):
         party_id = self.kwargs['party_id']
         return Invitation.objects.filter(party=party_id)
-

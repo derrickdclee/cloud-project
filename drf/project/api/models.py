@@ -10,7 +10,9 @@ class Party(models.Model):
         verbose_name_plural = 'Parties'
 
     host = models.ForeignKey('auth.User', related_name='parties', on_delete=models.CASCADE)
-    invitees = models.ManyToManyField('auth.User', through='Invitation')
+    # need the related_name fields to be present in bouncers, invitees
+    bouncers = models.ManyToManyField('auth.User', related_name='bouncer_parties')
+    invitees = models.ManyToManyField('auth.User', related_name='invitee_parties', through='Invitation')
     name = models.CharField(max_length=100)
     description = models.TextField()
     lat = models.DecimalField(max_digits=9, decimal_places=6, null=True)
