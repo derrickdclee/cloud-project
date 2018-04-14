@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
+from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from rest_condition import And, Or, Not
 from social_django.models import UserSocialAuth
 
@@ -29,6 +30,7 @@ class PartyList(generics.ListCreateAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
     permission_classes = (Or(permissions.IsAdminUser, And(permissions.IsAuthenticated, Not(IsGetRequest))),)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def perform_create(self, serializer):
         serializer.save(host=self.request.user)
