@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.dispatch import receiver
 from project.api import file_util
 import uuid
 
@@ -25,6 +26,12 @@ class Party(models.Model):
 
     def __str__(self):
         return self.name
+
+
+@receiver(models.signals.post_delete, sender=Party)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    if instance.image:
+        instance.image.delete(save=False)
 
 
 class Invitation(models.Model):
