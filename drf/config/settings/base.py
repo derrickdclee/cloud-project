@@ -40,6 +40,7 @@ THIRD_PARTY_APPS = (
     'oauth2_provider',
     'social_django',
     'rest_framework_social_oauth2',
+    'storages',
 )
 
 LOCAL_APPS = (
@@ -136,20 +137,6 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
-STATIC_ROOT = normpath(join(ROOT_DIR, "www", "static"))
-STATIC_URL = '/static/'
-STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-)
-
-# Media files
-MEDIA_ROOT = normpath(join(APPS_DIR, 'media'))
-MEDIA_URL = '/media/'
-
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
@@ -169,3 +156,22 @@ SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
     'fields': 'id, name, email'
 }
+
+# AWS S3 stuff
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+AWS_S3_CUSTOM_DOMAIN = '{}.s3.amazonaws.com'.format(AWS_STORAGE_BUCKET_NAME)
+AWS_S3_HOST = 's3.us-west-2.amazonaws.com'
+AWS_QUERYSTRING_AUTH = False
+
+# static files setting
+STATICFILES_LOCATION = 'static'
+STATICFILES_STORAGE = 'config.settings.custom_storages.StaticStorage'
+STATIC_URL = 'https://{}/{}/'.format(AWS_S3_CUSTOM_DOMAIN, STATICFILES_LOCATION)
+
+# media files setting
+MEDIAFILES_LOCATION = 'media'
+MEDIA_URL = 'https://{}/{}/'.format(AWS_S3_CUSTOM_DOMAIN, MEDIAFILES_LOCATION)
+DEFAULT_FILE_STORAGE = 'config.settings.custom_storages.MediaStorage'

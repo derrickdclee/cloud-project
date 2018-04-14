@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from project.api import file_util
 import uuid
 
 
@@ -15,6 +16,7 @@ class Party(models.Model):
     invitees = models.ManyToManyField('auth.User', related_name='invitee_parties', through='Invitation')
     name = models.CharField(max_length=100)
     description = models.TextField()
+    image = models.ImageField(upload_to=file_util.party_directory_path, blank=True, null=True)
     lat = models.DecimalField(max_digits=9, decimal_places=6, null=True)
     lng = models.DecimalField(max_digits=9, decimal_places=6, null=True)
     start_time = models.DateTimeField()
