@@ -61,6 +61,13 @@ class UserDetail(generics.RetrieveAPIView):
     permission_classes = (Or(IsAdmin, IsSameUser), )
 
 
+class MyUserDetail(UserDetail):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self):
+        return User.objects.get(pk=self.request.user.id)
+
+
 class InvitationList(generics.ListCreateAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
@@ -89,6 +96,14 @@ class HostedPartyList(generics.ListAPIView):
         return Party.objects.filter(host=host_id)
 
 
+class MyHostedPartyList(HostedPartyList):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        host_id = self.request.user.id
+        return Party.objects.filter(host=host_id)
+
+
 class InvitedPartyList(generics.ListAPIView):
     serializer_class = PartySerializer
     permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithParam),)
@@ -98,7 +113,15 @@ class InvitedPartyList(generics.ListAPIView):
         """
         note this weird '__in' syntax for filtering on ManyToManyField
         """
-        return Party.objects.filter(invitees__in=invitee_id)
+        return Party.objects.filter(invitees__id=invitee_id)
+
+
+class MyInvitedPartyList(InvitedPartyList):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        invitee_id = self.request.user.id
+        return Party.objects.filter(invitees__id=invitee_id)
 
 
 class InvitationToPartyList(generics.ListAPIView):
