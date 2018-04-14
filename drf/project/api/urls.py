@@ -23,5 +23,9 @@ urlpatterns = [
         views.InvitationToPartyList.as_view()),
 ]
 
+"""
+how to rsvp?
+how to check in people?
+"""
 
 urlpatterns = format_suffix_patterns(urlpatterns)

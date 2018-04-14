@@ -30,8 +30,9 @@ class PartySerializer(serializers.ModelSerializer):
 class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation
-        fields = ('id', 'invitee', 'party', 'has_rsvped', 'has_checkedin',)
+        fields = ('id', 'invitee', 'party', 'facebook_id', 'has_rsvped', 'has_checkedin',)
 
     id = serializers.ReadOnlyField()
     invitee = serializers.ReadOnlyField(source='invitee.username')
     party = serializers.ReadOnlyField(source='party.name')
+    facebook_id = serializers.ReadOnlyField()

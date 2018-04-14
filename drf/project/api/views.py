@@ -80,7 +80,7 @@ class InvitationList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         invitee = self.lookup_user_with_facebook_id(self.request.data['invitee_facebook_id'])
         party = Party.objects.get(pk=self.request.data['party_id'])
-        serializer.save(invitee=invitee, party=party)
+        serializer.save(invitee=invitee, party=party, facebook_id=self.request.data['invitee_facebook_id'])
 
     def lookup_user_with_facebook_id(self, facebook_id):
         user_fb = UserSocialAuth.objects.get(uid=facebook_id)
@@ -117,7 +117,7 @@ class InvitedPartyList(generics.ListAPIView):
     def get_queryset(self):
         invitee_id = self.kwargs['user_id']
         """
-        note this weird '__in' syntax for filtering on ManyToManyField
+        note this weird double underscore syntax for filtering on ManyToManyField
         """
         return Party.objects.filter(invitees__id=invitee_id)
 
