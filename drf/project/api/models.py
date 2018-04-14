@@ -29,9 +29,24 @@ class Party(models.Model):
 
 
 @receiver(models.signals.post_delete, sender=Party)
-def auto_delete_file_on_delete(sender, instance, **kwargs):
+def auto_delete_image_on_delete(sender, instance, **kwargs):
     if instance.image:
         instance.image.delete(save=False)
+
+
+@receiver(models.signals.pre_save, sender=Party)
+def auto_delete_image_on_update(sender, instance, **kwargs):
+    if not instance.pk:
+        return False
+
+    try:
+        old_image = Party.objects.get(pk=instance.pk).image
+    except Party.DoesNotExist:
+        return False
+
+    new_image = instance.image
+    if not old_image == new_image:
+        old_image.delete(save=False)
 
 
 class Invitation(models.Model):
