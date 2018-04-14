@@ -44,6 +44,12 @@ class IsHostOfInvitation(permissions.BasePermission):
         return party.host == request.user
 
 
+class IsHostOfInvitationWithParam(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        print("fuck")
+        return obj.party.host == request.user
+
+
 class IsHostOfParty(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
@@ -71,6 +77,12 @@ class IsHostOrInvitee(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return (obj.party.host == request.user) or (obj.invitee == request.user)
+
+
+class IsInvitee(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        print("fuck")
+        return obj.invitee == request.user
 
 
 class IsHostOrBouncer(permissions.BasePermission):

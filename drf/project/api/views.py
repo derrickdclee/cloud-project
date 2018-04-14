@@ -10,7 +10,8 @@ from rest_condition import And, Or, Not
 from social_django.models import UserSocialAuth
 
 from project.api.permissions import IsAdmin, IsGetRequest, IsHostOfParty, IsSameUser, \
-    IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation, IsHostOfPartyWithParam, IsHostOrBouncer
+    IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation, IsHostOfPartyWithParam, IsHostOrBouncer, \
+    IsInvitee, IsHostOfInvitationWithParam
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
 from project.api.serializers import PartySerializer, UserSerializer, InvitationSerializer
@@ -87,10 +88,36 @@ class InvitationList(generics.ListCreateAPIView):
         return user_fb.user
 
 
-class InvitationDetail(generics.RetrieveUpdateDestroyAPIView):
+class InvitationDetail(generics.RetrieveDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
     permission_classes = (Or(IsAdmin, IsHostOrInvitee),)
+
+
+class InvitationRsvp(generics.UpdateAPIView):
+    permission_classes = (Or(IsAdmin, IsInvitee),)
+
+    def put(self, request, *args, **kwargs):
+        invitation = Invitation.objects.get(pk=kwargs['pk'])
+        self.check_object_permissions(request, invitation)
+        invitation.has_rsvped = True
+        invitation.save()
+        serializer = InvitationSerializer(invitation)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class InvitationCheckin(generics.UpdateAPIView):
+    queryset = Invitation.objects.all()
+    serializer_class = InvitationSerializer
+    permission_classes = (Or(IsAdmin, IsHostOfInvitationWithParam),)
+
+    def put(self, request, *args, **kwargs):
+        invitation = Invitation.objects.get(pk=kwargs['pk'])
+        self.check_object_permissions(request, invitation)
+        invitation.has_checkedin = True
+        invitation.save()
+        serializer = InvitationSerializer(invitation)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class HostedPartyList(generics.ListAPIView):
