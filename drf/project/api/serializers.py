@@ -6,7 +6,7 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', )
+        fields = ('id', 'username', 'email',)
 
 
 class PartySerializer(serializers.ModelSerializer):
@@ -19,7 +19,7 @@ class PartySerializer(serializers.ModelSerializer):
     host = serializers.ReadOnlyField(source='host.username')
     bouncers = UserSerializer(many=True, read_only=True)  # read_only required for nested serializer
     invitees = UserSerializer(many=True, read_only=True)
-    image = serializers.ImageField(use_url=True)
+    image = serializers.ImageField(use_url=True, required=False)
 
     def validate(self, data):
         if data['start_time'] > data['end_time']:

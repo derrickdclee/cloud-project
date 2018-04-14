@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_condition import And, Or, Not
+from social_django.models import UserSocialAuth
 
 from project.api.permissions import IsAdmin, IsGetRequest, IsHostOfParty, IsSameUser, \
     IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation, IsHostOfPartyWithParam, IsHostOrBouncer
@@ -65,7 +66,8 @@ class MyUserDetail(UserDetail):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self):
-        return User.objects.get(pk=self.request.user.id)
+        user_id = self.request.user.id
+        return User.objects.get(pk=user_id)
 
 
 class InvitationList(generics.ListCreateAPIView):
@@ -76,9 +78,13 @@ class InvitationList(generics.ListCreateAPIView):
     # this is a hook, called when creating an instance
     # we need to override this method as we are writing to a ReadOnlyField
     def perform_create(self, serializer):
-        invitee = User.objects.get(pk=self.request.data['invitee_id'])
+        invitee = self.lookup_user_with_facebook_id(self.request.data['invitee_facebook_id'])
         party = Party.objects.get(pk=self.request.data['party_id'])
         serializer.save(invitee=invitee, party=party)
+
+    def lookup_user_with_facebook_id(self, facebook_id):
+        user_fb = UserSocialAuth.objects.get(uid=facebook_id)
+        return user_fb.user
 
 
 class InvitationDetail(generics.RetrieveUpdateDestroyAPIView):
