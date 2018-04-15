@@ -4,6 +4,11 @@ from project.api.models import Party
 
 
 class IsAdmin(permissions.IsAdminUser):
+    """
+    Need to override the permissions.IsAdminUser because of a bug in rest_conditions library
+    whereby mixing permissions that implements has_object_permission with those that don't lead to
+    the whole condition being short-circuited
+    """
     def has_permission(self, request, view):
         return True
 

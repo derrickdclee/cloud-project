@@ -25,7 +25,7 @@ class Party(models.Model):
     deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name
+        return "{name} hosted by {host}".format(name=self.name, host=self.host)
 
 
 @receiver(models.signals.post_delete, sender=Party)
