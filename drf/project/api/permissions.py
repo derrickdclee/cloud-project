@@ -16,7 +16,7 @@ class IsGetRequest(permissions.BasePermission):
         return request.method == 'GET'
 
 
-class IsSameUser(permissions.BasePermission):
+class IsSameUserObject(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
     """
@@ -25,7 +25,7 @@ class IsSameUser(permissions.BasePermission):
         return obj == request.user
 
 
-class IsSameUserWithParam(permissions.BasePermission):
+class IsSameUserWithURLParam(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
     """
@@ -34,23 +34,7 @@ class IsSameUserWithParam(permissions.BasePermission):
         return User.objects.get(pk=view.kwargs['user_id']) == request.user
 
 
-class IsHostOfInvitation(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it.
-    """
-
-    def has_permission(self, request, view):
-        party = Party.objects.get(pk=request.data['party_id'])
-        return party.host == request.user
-
-
-class IsHostOfInvitationWithParam(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        print("fuck")
-        return obj.party.host == request.user
-
-
-class IsHostOfParty(permissions.BasePermission):
+class IsHostOfPartyObject(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
     """
@@ -59,7 +43,7 @@ class IsHostOfParty(permissions.BasePermission):
         return obj.host == request.user
 
 
-class IsHostOfPartyWithParam(permissions.BasePermission):
+class IsHostOfPartyWithURLParam(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
     """
@@ -69,19 +53,28 @@ class IsHostOfPartyWithParam(permissions.BasePermission):
         return party.host == request.user
 
 
-class IsHostOrInvitee(permissions.BasePermission):
+class IsHostOfPartyWithParam(permissions.BasePermission):
     """
-    TODO: not very OO...
     Custom permission to only allow owners of an object to edit it.
     """
 
-    def has_object_permission(self, request, view, obj):
-        return (obj.party.host == request.user) or (obj.invitee == request.user)
+    def has_permission(self, request, view):
+        party = Party.objects.get(pk=request.data['party_id'])
+        return party.host == request.user
 
 
-class IsInvitee(permissions.BasePermission):
+class IsHostOfInvitationObject(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        print("fuck")
+        return obj.party.host == request.user
+
+
+class IsBouncerOfInvitationObject(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return request.user in obj.party.bouncers.all()
+
+
+class IsInviteeOfInvitationObject(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
         return obj.invitee == request.user
 
 
@@ -90,3 +83,4 @@ class IsHostOrBouncer(permissions.BasePermission):
         party = Party.objects.get(pk=view.kwargs['party_id'])
         # note that we need .all() on manytomanyfields
         return party.host == request.user or request.user in party.bouncers.all()
+

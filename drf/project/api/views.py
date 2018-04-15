@@ -10,9 +10,9 @@ from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from rest_condition import And, Or, Not
 from social_django.models import UserSocialAuth
 
-from project.api.permissions import IsAdmin, IsGetRequest, IsHostOfParty, IsSameUser, \
-    IsHostOrInvitee, IsSameUserWithParam, IsHostOfInvitation, IsHostOfPartyWithParam, IsHostOrBouncer, \
-    IsInvitee, IsHostOfInvitationWithParam
+from project.api.permissions import IsAdmin, IsGetRequest, IsSameUserObject, IsSameUserWithURLParam, \
+    IsHostOfPartyObject, IsHostOfPartyWithURLParam, IsHostOfPartyWithParam, IsHostOfInvitationObject, \
+    IsBouncerOfInvitationObject, IsInviteeOfInvitationObject, IsHostOrBouncer
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
 from project.api.serializers import PartySerializer, UserSerializer, InvitationSerializer
@@ -39,11 +39,11 @@ class PartyList(generics.ListCreateAPIView):
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    permission_classes = (Or(IsAdmin, IsHostOfParty), )
+    permission_classes = (Or(IsAdmin, IsHostOfPartyObject), )
 
 
 class BouncerList(APIView):
-    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithParam),)
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithURLParam),)
 
     def post(self, request, *args, **kwargs):
         party = Party.objects.get(pk=kwargs['pk'])
@@ -62,7 +62,7 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (Or(IsAdmin, IsSameUser), )
+    permission_classes = (Or(IsAdmin, IsSameUserObject), )
 
 
 class MyUserDetail(UserDetail):
@@ -76,7 +76,7 @@ class MyUserDetail(UserDetail):
 class InvitationList(generics.ListCreateAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = (Or(permissions.IsAdminUser, And(IsHostOfInvitation, Not(IsGetRequest))),)
+    permission_classes = (Or(permissions.IsAdminUser, And(IsHostOfPartyWithParam, Not(IsGetRequest))),)
 
     # this is a hook, called when creating an instance
     # we need to override this method as we are writing to a ReadOnlyField
@@ -93,11 +93,11 @@ class InvitationList(generics.ListCreateAPIView):
 class InvitationDetail(generics.RetrieveDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = (Or(IsAdmin, IsHostOrInvitee),)
+    permission_classes = (Or(IsAdmin, Or(IsHostOfInvitationObject, IsInviteeOfInvitationObject)),)
 
 
 class InvitationRsvp(generics.UpdateAPIView):
-    permission_classes = (Or(IsAdmin, IsInvitee),)
+    permission_classes = (Or(IsAdmin, IsInviteeOfInvitationObject),)
 
     def put(self, request, *args, **kwargs):
         invitation = Invitation.objects.get(pk=kwargs['pk'])
@@ -111,7 +111,7 @@ class InvitationRsvp(generics.UpdateAPIView):
 class InvitationCheckin(generics.UpdateAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = (Or(IsAdmin, IsHostOfInvitationWithParam),)
+    permission_classes = (Or(IsAdmin, Or(IsHostOfInvitationObject, IsBouncerOfInvitationObject)),)
 
     def put(self, request, *args, **kwargs):
         invitation = Invitation.objects.get(pk=kwargs['pk'])
@@ -124,7 +124,7 @@ class InvitationCheckin(generics.UpdateAPIView):
 
 class HostedPartyList(generics.ListAPIView):
     serializer_class = PartySerializer
-    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithParam),)
+    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithURLParam),)
 
     def get_queryset(self):
         host_id = self.kwargs['user_id']
@@ -141,7 +141,7 @@ class MyHostedPartyList(HostedPartyList):
 
 class InvitedPartyList(generics.ListAPIView):
     serializer_class = PartySerializer
-    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithParam),)
+    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithURLParam),)
 
     def get_queryset(self):
         invitee_id = self.kwargs['user_id']
