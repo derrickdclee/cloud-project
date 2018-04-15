@@ -2,18 +2,24 @@ package edu.duke.compsci290.partyappandroid;
 
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.location.Location;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+
 import java.nio.charset.Charset;
 
-import edu.duke.compsci290.partyappandroid.EventPackage.Party;
+import bolts.Task;
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
 
 public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapter.OnNdefPushCompleteCallback, NfcAdapter.CreateNdefMessageCallback{
@@ -21,6 +27,7 @@ public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapte
     private NfcAdapter mNfcAdapter;
     private boolean mHasSentMessage;
     private User mUser;
+    private FusedLocationProviderClient mFusedLocationProviderClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +44,9 @@ public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapte
             //This will be called if the message is sent successfully
             mNfcAdapter.setOnNdefPushCompleteCallback(this, this);
         }
+        
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        
     }
 
     @Override
@@ -105,6 +115,35 @@ public class PartyCheckInActivity extends AppCompatActivity implements NfcAdapte
         if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
             // drop NFC events
 
+        }
+    }
+
+    private void verifyUserLocation(){
+        try {
+            //if (mLocationPermissionGranted) {
+                final com.google.android.gms.tasks.Task locationResult = mFusedLocationProviderClient.getLastLocation();
+                locationResult.addOnCompleteListener(this, new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull com.google.android.gms.tasks.Task task) {
+                        if (task.isSuccessful()) {
+                            // Set the map's camera position to the current location of the device.
+
+                            Location lastKnownLocation = (Location) task.getResult();
+                            Log.d("LONGITUDE", lastKnownLocation.getLongitude()+"");
+                            Log.d("LATITUDE", lastKnownLocation.getLatitude()+"");
+                            Log.d("ACCURACY", lastKnownLocation.getAccuracy()+"");
+                            Log.d("TIME", lastKnownLocation.getTime()+"");
+
+
+                        } else {
+                            Log.d("DEBUG", "Current location is null. Using defaults.");
+                            Log.e("DEBUG", "Exception: %s", task.getException());
+                        }
+                    }
+                });
+            //}
+        } catch(SecurityException e)  {
+            Log.e("Exception: %s", e.getMessage());
         }
     }
 }

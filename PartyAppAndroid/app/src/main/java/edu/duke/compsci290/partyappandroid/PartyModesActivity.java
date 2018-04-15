@@ -2,11 +2,16 @@ package edu.duke.compsci290.partyappandroid;
 
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
@@ -22,6 +27,9 @@ public class PartyModesActivity extends AppCompatActivity {
     private Button mBouncerButton;
     private Button mInviteeButton;
     private User mUser;
+    private boolean mLocationPermissionGranted;
+    private final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 11;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +54,9 @@ public class PartyModesActivity extends AppCompatActivity {
         });
         mBouncerButton.setText("Bouncer Mode");
         mInviteeButton.setText("Invitee Mode");
+        getLocationPermission();
+
+
         GraphRequest request = GraphRequest.newMeRequest(
                 AccessToken.getCurrentAccessToken(),
                 new GraphRequest.GraphJSONObjectCallback() {
@@ -78,6 +89,10 @@ public class PartyModesActivity extends AppCompatActivity {
         this.startActivity(intent);
     }
     private void goToInviteeMode(){
+        if (!mLocationPermissionGranted){
+            getLocationPermission();
+            return;
+        }
         Intent intent = new Intent(this, PartyCheckInActivity.class);
         if (mUser != null){
             intent.putExtra("user_object", mUser);
@@ -105,4 +120,31 @@ public class PartyModesActivity extends AppCompatActivity {
         }
     }
 
+    private void getLocationPermission(){
+        /*
+     * Request location permission, so that we can get the location of the
+     * device. The result of the permission request is handled by a callback,
+     * onRequestPermissionsResult.
+     */
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            mLocationPermissionGranted = true;
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        mLocationPermissionGranted = false;
+        if (requestCode == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION){
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mLocationPermissionGranted = true;
+            }
+        }
+    }
 }

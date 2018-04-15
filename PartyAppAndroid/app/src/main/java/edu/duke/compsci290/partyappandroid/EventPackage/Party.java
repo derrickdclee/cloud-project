@@ -11,8 +11,8 @@ import java.util.Date;
 public class Party implements Serializable {
     private String mPartyName;
     private String mPartyDescription;
-    private Date mStartTime;
-    private Date mEndTime;
+    private String mStartTime;
+    private String mEndTime;
     private String mLocation;
     private ArrayList<User> mHost;
     private ArrayList<User> mInvitedTo;
@@ -20,7 +20,7 @@ public class Party implements Serializable {
     private ArrayList<User> mCheckedIn;
     private ArrayList<User> mBouncer;
     private PartyType mPartyType;
-    public Party(String partyName, String partyDescription, String location, Date startTime, Date endTime){
+    public Party(String partyName, String partyDescription, String location, String startTime, String endTime){
         mPartyName = partyName;
         mPartyDescription = partyDescription;
         mStartTime = startTime;

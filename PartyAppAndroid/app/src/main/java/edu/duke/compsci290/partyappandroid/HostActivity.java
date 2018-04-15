@@ -2,6 +2,7 @@ package edu.duke.compsci290.partyappandroid;
 
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.nfc.NfcAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,6 +12,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphRequestBatch;
@@ -24,6 +32,8 @@ import org.json.JSONObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
@@ -33,10 +43,14 @@ public class HostActivity extends AppCompatActivity {
     private ArrayList<Party> mPartiesHosting;
     private ArrayList<User> mUsersFriends;
     private HostAdapter mHostAdapter;
+    private RequestQueue queue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_host);
+        queue = Volley.newRequestQueue(this);
+
         mNewPartyButton = findViewById(R.id.new_party_button);
         mNewPartyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -44,9 +58,12 @@ public class HostActivity extends AppCompatActivity {
                 newPartyActivity();
             }
         });
+        getUserParties();
+
+
         Date startDate = new Date();
         Party testParty = new Party("Test Party", "This party is a test party. It is going to be a rager",
-                "location", startDate, startDate);
+                "location", startDate.toString(), startDate.toString());
         mPartiesHosting = new ArrayList<>();
         mUsersFriends = new ArrayList<>();
         mPartiesHosting.add(testParty);
@@ -55,6 +72,7 @@ public class HostActivity extends AppCompatActivity {
         rv.setAdapter(mHostAdapter);
         //rv.setAdapter(new HostAdapter(this, mPartiesHosting));
         rv.setLayoutManager(new LinearLayoutManager(this));
+        /*
         GraphRequest request = GraphRequest.newMeRequest(
                 AccessToken.getCurrentAccessToken(),
                 new GraphRequest.GraphJSONObjectCallback() {
@@ -77,7 +95,7 @@ public class HostActivity extends AppCompatActivity {
         Bundle parameters = new Bundle();
         parameters.putString("fields", "id,name,email");
         request.setParameters(parameters);
-        request.executeAsync();
+        request.executeAsync();*/
 
     }
     private void newPartyActivity(){
@@ -85,6 +103,7 @@ public class HostActivity extends AppCompatActivity {
         this.startActivity(intent);
     }
 
+    /*
     private void getUserFriends(String userId){
         final GraphRequest request = GraphRequest.newGraphPathRequest(
                 AccessToken.getCurrentAccessToken(),
@@ -113,7 +132,7 @@ public class HostActivity extends AppCompatActivity {
                 });
 
         request.executeAsync();
-    }
+    }*/
 
     @Override
     public void onResume() {
@@ -134,6 +153,49 @@ public class HostActivity extends AppCompatActivity {
             // drop NFC events
 
         }
+    }
+
+    private void getUserParties(){
+        String accessToken = "";
+        SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
+        if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
+            accessToken = mPrefs.getString("access_token", "");
+        }
+
+        Log.d("ACCESS_TOKEN", accessToken);
+        String url = "http://party-app-dev.us-west-2.elasticbeanstalk.com/parties/hosted/me";
+        final String finalAccessToken = accessToken;
+        StringRequest postRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>()
+                {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+                        Log.d("Response", response);
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        Log.d("Error.Response", error.toString());
+                        Log.d("ACCESS_TOKEN", "whatever");
+                    }
+                }
+        )
+
+        {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("Authorization", "Bearer " + finalAccessToken);
+                return params;
+            }
+        };
+        queue.add(postRequest);
+
     }
 
 }
