@@ -1,3 +1,12 @@
 .DS_Store
 .idea/
 /gradle.properties
+*.iml
+.gradle
+PartyAppAndroid/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+PartyAppAndroid/build
+/captures
+.externalNativeBuild
