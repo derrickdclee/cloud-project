@@ -36,7 +36,11 @@ class IsSameUserWithURLParam(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        return User.objects.get(pk=view.kwargs['user_id']) == request.user
+        try:
+            user = User.objects.get(pk=view.kwargs['user_id'])
+        except User.DoesNotExist:
+            return False
+        return user == request.user
 
 
 class IsHostOfPartyObject(permissions.BasePermission):
@@ -54,7 +58,10 @@ class IsHostOfPartyWithURLParam(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        party = Party.objects.get(pk=view.kwargs['pk'])
+        try:
+            party = Party.objects.get(pk=view.kwargs['pk'])
+        except Party.DoesNotExist:
+            return False
         return party.host == request.user
 
 
@@ -64,7 +71,10 @@ class IsHostOfPartyWithParam(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        party = Party.objects.get(pk=request.data['party_id'])
+        party_id = request.data.get('party_id')
+        if party_id is None:
+            return False
+        party = Party.objects.get(pk=party_id)
         return party.host == request.user
 
 
@@ -85,7 +95,10 @@ class IsInviteeOfInvitationObject(permissions.BasePermission):
 
 class IsHostOrBouncer(permissions.BasePermission):
     def has_permission(self, request, view):
-        party = Party.objects.get(pk=view.kwargs['party_id'])
+        try:
+            party = Party.objects.get(pk=view.kwargs['party_id'])
+        except Party.DoesNotExist:
+            return False
         # note that we need .all() on manytomanyfields
         return party.host == request.user or request.user in party.bouncers.all()
 
