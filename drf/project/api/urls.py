@@ -10,7 +10,7 @@ urlpatterns = [
     url(r'^users/$', views.UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view()),
     url(r'^users/me/$', views.MyUserDetail.as_view()),
-    url(r'^invitations/$', views.InvitationList.as_view()),
+    url(r'^invitations/$', views.InvitationList.as_view(), name='invitation-list'),
     url(r'^invitations/(?P<pk>[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12})/$',
         views.InvitationDetail.as_view()),
     url(r'^invitations/(?P<pk>[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12})/rsvp/$',

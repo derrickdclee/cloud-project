@@ -22,7 +22,8 @@ from project.api.serializers import PartySerializer, UserSerializer, InvitationS
 def api_root(request, format=None):
     return Response({
         'users': reverse('user-list', request=request, format=format),
-        'parties': reverse('party-list', request=request, format=format)
+        'parties': reverse('party-list', request=request, format=format),
+        'invitations': reverse('invitation-list', request=request, format=format),
     })
 
 
