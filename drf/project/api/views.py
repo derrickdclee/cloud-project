@@ -28,6 +28,14 @@ def api_root(request, format=None):
     })
 
 
+def lookup_user_with_facebook_id(facebook_id):
+    try:
+        user_fb = UserSocialAuth.objects.get(uid=facebook_id)
+    except UserSocialAuth.DoesNotExist:
+        raise ValidationError("The user does not exist.")
+    return user_fb.user
+
+
 class PartyList(generics.ListCreateAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
@@ -89,7 +97,7 @@ class InvitationList(generics.ListCreateAPIView):
         invitee_facebook_id = self.request.data.get('invitee_facebook_id')
         if invitee_facebook_id is None:
             raise ValidationError("'invitee_facebook_id' was not provided.")
-        invitee = self.lookup_user_with_facebook_id(invitee_facebook_id)
+        invitee = lookup_user_with_facebook_id(invitee_facebook_id)
 
         party_id = self.request.data.get('party_id')
         if party_id is None:
@@ -99,13 +107,6 @@ class InvitationList(generics.ListCreateAPIView):
         except Party.DoesNotExist:
             raise ValidationError("The party does not exist.")
         serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
-
-    def lookup_user_with_facebook_id(self, facebook_id):
-        try:
-            user_fb = UserSocialAuth.objects.get(uid=facebook_id)
-        except UserSocialAuth.DoesNotExist:
-            raise ValidationError("The user does not exist.")
-        return user_fb.user
 
 
 class InvitationDetail(generics.RetrieveDestroyAPIView):
