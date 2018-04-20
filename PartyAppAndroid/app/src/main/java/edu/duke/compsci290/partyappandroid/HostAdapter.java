@@ -7,8 +7,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
 
@@ -37,6 +40,7 @@ public class HostAdapter extends RecyclerView.Adapter<HostAdapter.ViewHolder> {
         public Button mDeleteButton;
         public TextView mPartyName;
         public TextView mPartyDescription;
+        public ImageView mPartyImage;
         public ViewHolder(View itemView) {
             super(itemView);
             mLinearLayout = itemView.findViewById(R.id.party_holder_linear_layout);
@@ -45,6 +49,7 @@ public class HostAdapter extends RecyclerView.Adapter<HostAdapter.ViewHolder> {
             mDeleteButton = itemView.findViewById(R.id.party_delete_button);
             mPartyName = itemView.findViewById(R.id.party_name_text);
             mPartyDescription = itemView.findViewById(R.id.party_description_text);
+            mPartyImage = itemView.findViewById(R.id.party_image);
         }
     }
     @Override
@@ -71,6 +76,7 @@ public class HostAdapter extends RecyclerView.Adapter<HostAdapter.ViewHolder> {
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.mPartyName.setText(mParties.get(position).getPartyName());
         holder.mPartyDescription.setText(mParties.get(position).getPartyDescription());
+        Picasso.get().load(mParties.get(position).getImageUri()).into(holder.mPartyImage);
     }
 
     @Override

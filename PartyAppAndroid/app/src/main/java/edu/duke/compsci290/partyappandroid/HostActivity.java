@@ -3,6 +3,8 @@ package edu.duke.compsci290.partyappandroid;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Address;
+import android.location.Geocoder;
 import android.nfc.NfcAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,10 +31,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
@@ -43,6 +48,7 @@ public class HostActivity extends AppCompatActivity {
     private ArrayList<Party> mPartiesHosting;
     private ArrayList<User> mUsersFriends;
     private HostAdapter mHostAdapter;
+    private RecyclerView rv;
     private RequestQueue queue;
 
     @Override
@@ -59,80 +65,19 @@ public class HostActivity extends AppCompatActivity {
             }
         });
         getUserParties();
-
-
-        Date startDate = new Date();
-        Party testParty = new Party("Test Party", "This party is a test party. It is going to be a rager",
-                "location", startDate.toString(), startDate.toString());
         mPartiesHosting = new ArrayList<>();
         mUsersFriends = new ArrayList<>();
-        mPartiesHosting.add(testParty);
-        RecyclerView rv = findViewById(R.id.parties_host_recycler_view);
-        mHostAdapter = new HostAdapter(this, mPartiesHosting);
-        rv.setAdapter(mHostAdapter);
+        rv = findViewById(R.id.parties_host_recycler_view);
+        //mHostAdapter = new HostAdapter(this, mPartiesHosting);
+        //rv.setAdapter(mHostAdapter);
         //rv.setAdapter(new HostAdapter(this, mPartiesHosting));
         rv.setLayoutManager(new LinearLayoutManager(this));
-        /*
-        GraphRequest request = GraphRequest.newMeRequest(
-                AccessToken.getCurrentAccessToken(),
-                new GraphRequest.GraphJSONObjectCallback() {
-                    @Override
-                    public void onCompleted(
-                            JSONObject object,
-                            GraphResponse response) {
-                        String id = "";
-                        try{
-                            id = object.getString("id");
-                            String email = object.getString("email");
-                            String name = object.getString("name");
-                        } catch (JSONException e){
-                            e.printStackTrace();
-                        }
-
-                        getUserFriends(id);
-                    }
-                });
-        Bundle parameters = new Bundle();
-        parameters.putString("fields", "id,name,email");
-        request.setParameters(parameters);
-        request.executeAsync();*/
 
     }
     private void newPartyActivity(){
         Intent intent = new Intent(this, AddPartyActivity.class);
         this.startActivity(intent);
     }
-
-    /*
-    private void getUserFriends(String userId){
-        final GraphRequest request = GraphRequest.newGraphPathRequest(
-                AccessToken.getCurrentAccessToken(),
-                "/" + userId + "/friends",
-                new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        JSONObject jsonResponse = response.getJSONObject();
-                        try{
-                            JSONArray friendArray = jsonResponse.getJSONArray("data");
-                            for (int i=0; i<friendArray.length();i++){
-                                JSONObject friend = friendArray.getJSONObject(i);
-                                User friendUser;
-                                String friendName = friend.getString("name");
-                                String friendId = friend.getString("id");
-                                friendUser = new User(friendId, friendName);
-                                Log.d("FRIENDNAME", friendUser.getUserName());
-                                Log.d("FRIENDID", friendUser.getUserId());
-                                mUsersFriends.add(friendUser);
-                            }
-                            mHostAdapter.setUserFriends(mUsersFriends);
-                        } catch (JSONException e){
-                            e.printStackTrace();
-                        }
-                    }
-                });
-
-        request.executeAsync();
-    }*/
 
     @Override
     public void onResume() {
@@ -172,6 +117,49 @@ public class HostActivity extends AppCompatActivity {
                     public void onResponse(String response) {
                         // response
                         Log.d("Response", response);
+                        try {
+                            JSONArray jsonArray = new JSONArray(response);
+                            for (int i=0;i<jsonArray.length();i++){
+                                JSONObject json = jsonArray.getJSONObject(i);
+                                String name = json.getString("name");
+                                String description = json.getString("description");
+                                String imageUrl = json.getString("image");
+                                String latString = json.getString("lat");
+                                String lngString = json.getString("lng");
+                                String startTime = json.getString("start_time");
+                                String endTime = json.getString("end_time");
+                                String id = json.getString("id");
+                                double lat = Double.parseDouble(latString);
+                                double lng = Double.parseDouble(lngString);
+
+                                Geocoder geocoder;
+                                List<Address> addresses;
+                                geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+
+                                addresses = geocoder.getFromLocation(lat, lng, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+
+                                String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+                                String city = addresses.get(0).getLocality();
+                                String state = addresses.get(0).getAdminArea();
+                                /*
+                                String country = addresses.get(0).getCountryName();
+                                String postalCode = addresses.get(0).getPostalCode();
+                                String knownName = addresses.get(0).getFeatureName();*/
+                                String fullAddress = address+" "+city+" "+state;
+                                Party newParty = new Party(name, description, fullAddress, startTime, endTime);
+                                newParty.setImageUri(imageUrl);
+                                newParty.setPartyId(id);
+
+                                mPartiesHosting.add(newParty);
+                            }
+                            rv.setAdapter(new HostAdapter(getApplicationContext(), mPartiesHosting));
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
 
                     }
                 },

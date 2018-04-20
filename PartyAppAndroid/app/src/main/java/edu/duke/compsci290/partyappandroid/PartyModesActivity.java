@@ -2,6 +2,7 @@ package edu.duke.compsci290.partyappandroid;
 
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.support.annotation.NonNull;
@@ -71,6 +72,10 @@ public class PartyModesActivity extends AppCompatActivity {
                             id = object.getString("id");
                             email = object.getString("email");
                             name = object.getString("name");
+                            SharedPreferences myPreferences = getSharedPreferences("app_tokens", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = myPreferences.edit();
+                            editor.putString("facebook_id", id);
+                            editor.commit();
                         } catch (JSONException e){
                             e.printStackTrace();
                         }

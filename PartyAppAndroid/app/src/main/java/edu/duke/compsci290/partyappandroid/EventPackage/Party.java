@@ -1,6 +1,7 @@
 package edu.duke.compsci290.partyappandroid.EventPackage;
 
 import java.io.Serializable;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -9,6 +10,7 @@ import java.util.Date;
  */
 
 public class Party implements Serializable {
+    private String mPartyId;
     private String mPartyName;
     private String mPartyDescription;
     private String mStartTime;
@@ -20,6 +22,7 @@ public class Party implements Serializable {
     private ArrayList<User> mCheckedIn;
     private ArrayList<User> mBouncer;
     private PartyType mPartyType;
+    private String mImageUri;
     public Party(String partyName, String partyDescription, String location, String startTime, String endTime){
         mPartyName = partyName;
         mPartyDescription = partyDescription;
@@ -81,5 +84,17 @@ public class Party implements Serializable {
             return PartyUserStatus.INVITED;
         }
         return PartyUserStatus.UNINVITED;
+    }
+    public void setImageUri(String uri){
+        mImageUri = uri;
+    }
+    public String getImageUri(){
+        return mImageUri;
+    }
+    public void setPartyId(String id){
+        mPartyId = id;
+    }
+    public String getPartyId(){
+        return mPartyId;
     }
 }

@@ -18,8 +18,12 @@ import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+import com.u.rxfacebook.RxFacebook;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,21 +40,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import retrofit2.http.HTTP;
 
 public class MainActivity extends AppCompatActivity {
     private CallbackManager callbackManager;
     private LoginButton loginButton;
     private User mUser;
     private RequestQueue queue;
+
+    /*
+    To delete
+     */
+    private Disposable myDisposable;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         queue = Volley.newRequestQueue(this);
-        if (AccessToken.getCurrentAccessToken()!=null){
-            handleFacebookAccessToken(AccessToken.getCurrentAccessToken());
-        }
-
 
         callbackManager = CallbackManager.Factory.create();
         loginButton = (LoginButton) findViewById(R.id.login_button);
@@ -161,6 +171,38 @@ public class MainActivity extends AppCompatActivity {
 
         };
         queue.add(postRequest);
+
+    }
+    private void temporaryRetrofitTest(){
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "id,name,email");
+
+
+        GraphRequest request = new GraphRequest();
+        request.setAccessToken(AccessToken.getCurrentAccessToken());
+        request.setGraphPath("/me");
+        request.setParameters(parameters);
+        request.executeAsync();
+
+
+        Observable.defer(()->Observable.just(request.executeAndWait())).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(t -> {
+                    //Log.d("T", t.toString());
+                    Log.d("T", t.toString()+" "+"test");
+                    return new User("TEST", "test");
+                })
+                .subscribe(t ->{
+                    Log.d("WILLRETURN", "EYY");
+                }, e -> e.printStackTrace());
+
+
+
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
     }
 
