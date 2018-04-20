@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
+from rest_framework.exceptions import ValidationError
 from rest_condition import And, Or, Not
 from social_django.models import UserSocialAuth
 
@@ -25,6 +26,14 @@ def api_root(request, format=None):
         'parties': reverse('party-list', request=request, format=format),
         'invitations': reverse('invitation-list', request=request, format=format),
     })
+
+
+def lookup_user_with_facebook_id(facebook_id):
+    try:
+        user_fb = UserSocialAuth.objects.get(uid=facebook_id)
+    except UserSocialAuth.DoesNotExist:
+        raise ValidationError("The user does not exist.")
+    return user_fb.user
 
 
 class PartyList(generics.ListCreateAPIView):
@@ -48,7 +57,10 @@ class BouncerList(APIView):
 
     def post(self, request, *args, **kwargs):
         party = Party.objects.get(pk=kwargs['pk'])
-        bouncer = User.objects.get(pk=request.data['bouncer_id'])
+        bouncer_id = request.data.get('bouncer_id')
+        if bouncer_id is None:
+            raise ValidationError("'bouncer_id' was not provided.")
+        bouncer = User.objects.get(pk=bouncer_id)
         party.bouncers.add(bouncer)
         serializer = PartySerializer(party)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -82,13 +94,19 @@ class InvitationList(generics.ListCreateAPIView):
     # this is a hook, called when creating an instance
     # we need to override this method as we are writing to a ReadOnlyField
     def perform_create(self, serializer):
-        invitee = self.lookup_user_with_facebook_id(self.request.data['invitee_facebook_id'])
-        party = Party.objects.get(pk=self.request.data['party_id'])
-        serializer.save(invitee=invitee, party=party, facebook_id=self.request.data['invitee_facebook_id'])
+        invitee_facebook_id = self.request.data.get('invitee_facebook_id')
+        if invitee_facebook_id is None:
+            raise ValidationError("'invitee_facebook_id' was not provided.")
+        invitee = lookup_user_with_facebook_id(invitee_facebook_id)
 
-    def lookup_user_with_facebook_id(self, facebook_id):
-        user_fb = UserSocialAuth.objects.get(uid=facebook_id)
-        return user_fb.user
+        party_id = self.request.data.get('party_id')
+        if party_id is None:
+            raise ValidationError("'party_id' was not provided.")
+        try:
+            party = Party.objects.get(pk=party_id)
+        except Party.DoesNotExist:
+            raise ValidationError("The party does not exist.")
+        serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
 
 
 class InvitationDetail(generics.RetrieveDestroyAPIView):
@@ -101,7 +119,12 @@ class InvitationRsvp(generics.UpdateAPIView):
     permission_classes = (Or(IsAdmin, IsInviteeOfInvitationObject),)
 
     def put(self, request, *args, **kwargs):
-        invitation = Invitation.objects.get(pk=kwargs['pk'])
+        try:
+            invitation = Invitation.objects.get(pk=kwargs['pk'])
+        except Invitation.DoesNotExist:
+            raise ValidationError("The invitation does not exist.")
+
+        # we need to explicitly call this as we are overriding the put method
         self.check_object_permissions(request, invitation)
         invitation.has_rsvped = True
         invitation.save()
@@ -115,7 +138,10 @@ class InvitationCheckin(generics.UpdateAPIView):
     permission_classes = (Or(IsAdmin, Or(IsHostOfInvitationObject, IsBouncerOfInvitationObject)),)
 
     def put(self, request, *args, **kwargs):
-        invitation = Invitation.objects.get(pk=kwargs['pk'])
+        try:
+            invitation = Invitation.objects.get(pk=kwargs['pk'])
+        except Invitation.DoesNotExist:
+            raise ValidationError("The invitation does not exist.")
         self.check_object_permissions(request, invitation)
         invitation.has_checkedin = True
         invitation.save()
