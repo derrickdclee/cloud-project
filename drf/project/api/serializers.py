@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from project.api.models import Party, Invitation
 from rest_framework import serializers
+import datetime
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -21,7 +22,7 @@ class PartySerializer(serializers.ModelSerializer):
                   'start_time', 'end_time', 'deleted',)
 
     id = serializers.ReadOnlyField()
-    host = serializers.ReadOnlyField(source='host.full_name')
+    host = UserSerializer(read_only=True)
     bouncers = UserSerializer(many=True, read_only=True)  # read_only required for nested serializer
     invitees = UserSerializer(many=True, read_only=True)
     image = serializers.ImageField(use_url=True, required=False)
@@ -29,6 +30,8 @@ class PartySerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['start_time'] > data['end_time']:
             raise serializers.ValidationError("Start time cannot be later than end time.")
+        if data['start_time'] > datetime.datetime.now():
+            raise serializers.ValidationError("Start time cannot be in the past.")
         return data
 
 
@@ -38,6 +41,6 @@ class InvitationSerializer(serializers.ModelSerializer):
         fields = ('id', 'invitee', 'party', 'facebook_id', 'has_rsvped', 'has_checkedin',)
 
     id = serializers.ReadOnlyField()
-    invitee = serializers.ReadOnlyField(source='invitee.full_name')
+    invitee = UserSerializer(read_only=True)
     party = serializers.ReadOnlyField(source='party.name')
     facebook_id = serializers.ReadOnlyField()
