@@ -6,7 +6,12 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email',)
+        fields = ('id', 'username', 'email', 'full_name')
+
+    full_name = serializers.SerializerMethodField(method_name='get_user_full_name')
+
+    def get_user_full_name(self, obj):
+        return obj.get_full_name()
 
 
 class PartySerializer(serializers.ModelSerializer):
@@ -16,7 +21,7 @@ class PartySerializer(serializers.ModelSerializer):
                   'start_time', 'end_time', 'deleted',)
 
     id = serializers.ReadOnlyField()
-    host = serializers.ReadOnlyField(source='host.username')
+    host = serializers.ReadOnlyField(source='host.full_name')
     bouncers = UserSerializer(many=True, read_only=True)  # read_only required for nested serializer
     invitees = UserSerializer(many=True, read_only=True)
     image = serializers.ImageField(use_url=True, required=False)
@@ -33,6 +38,6 @@ class InvitationSerializer(serializers.ModelSerializer):
         fields = ('id', 'invitee', 'party', 'facebook_id', 'has_rsvped', 'has_checkedin',)
 
     id = serializers.ReadOnlyField()
-    invitee = serializers.ReadOnlyField(source='invitee.username')
+    invitee = serializers.ReadOnlyField(source='invitee.full_name')
     party = serializers.ReadOnlyField(source='party.name')
     facebook_id = serializers.ReadOnlyField()
