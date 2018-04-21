@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from project.api.models import Party, Invitation
 from rest_framework import serializers
-import datetime
+from django.utils import timezone
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -30,7 +30,7 @@ class PartySerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['start_time'] > data['end_time']:
             raise serializers.ValidationError("Start time cannot be later than end time.")
-        if data['start_time'] > datetime.datetime.now():
+        if data['start_time'] < timezone.now():
             raise serializers.ValidationError("Start time cannot be in the past.")
         return data
 
