@@ -15,7 +15,8 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <uses-feature android:name="android.hardware.location.gps" />
 
     <application
@@ -33,6 +34,9 @@
             </intent-filter>
         </activity>
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAWHpm1Wl96mAtp08uLsSDP125sBrhLymU" />
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id" />
@@ -58,15 +62,17 @@
         <activity android:name=".AddPartyActivity" />
         <activity android:name=".HostPartyActivity" />
         <activity android:name=".PartyScanActivity">
-
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
         <activity android:name=".PartyCheckInActivity" />
-        <activity android:name=".InviteeActivity"></activity>
+        <activity android:name=".InviteeActivity" />
+        <activity android:name=".InviteePartyActivity"></activity>
     </application>
 
 </manifest>

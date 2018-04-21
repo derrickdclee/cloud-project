@@ -48,4 +48,7 @@ public interface Service {
     Call<Response<Void>> removeInvitee(@Header("Authorization") String token,
                                          @Path("uuid") String uuid);
 
+    @GET("parties/invited/me")
+    Single<List<PartyInvite>> getPartiesInvitedTo(@Header("Authorization") String token);
+
 }

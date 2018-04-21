@@ -14,6 +14,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Geocoder;
 import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -33,6 +36,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -43,6 +47,13 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+
+import org.w3c.dom.Text;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -60,15 +71,22 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
 import edu.duke.compsci290.partyappandroid.EventPackage.Service;
+import id.zelory.compressor.Compressor;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -84,6 +102,8 @@ public class AddPartyActivity extends AppCompatActivity {
     private Button mEndTimeButton;
     private Button mStartDateButton;
     private Button mEndDateButton;
+    private Button mLocationButton;
+    private TextView mLocationText;
     private TextView mStartDateText;
     private TextView mEndDateText;
     private TextView mHiddenStartDate;
@@ -101,8 +121,12 @@ public class AddPartyActivity extends AppCompatActivity {
     private Uri mImageUri;
     private static final SimpleDateFormat sdfForDjango = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssXXX", Locale.getDefault());
     private static final int PICK_IMAGE = 100;
+    private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 7;
     private Service service;
     private MultipartBody.Part mImageRequestBody;
+    private Place mPlace;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,12 +141,14 @@ public class AddPartyActivity extends AppCompatActivity {
         mStartDateText = findViewById(R.id.start_date_text);
         mEndDateText = findViewById(R.id.end_date_text);
         mPartyName = findViewById(R.id.add_party_name_box);
-        mPartyLocation = findViewById(R.id.add_location_box);
         mPartyDescription = findViewById(R.id.add_party_description_box);
         mHiddenStartDate = findViewById(R.id.hidden_start_date);
         mHiddenEndDate = findViewById(R.id.hidden_end_date);
         mPartyImage = findViewById(R.id.uploaded_party_image);
         mUploadImageButton = findViewById(R.id.upload_image_button);
+
+        mLocationText = findViewById(R.id.chosen_location_text);
+        mLocationButton = findViewById(R.id.choose_location_button);
 
         Calendar myCal = Calendar.getInstance();
         myCal.set(Calendar.SECOND, 0);
@@ -158,6 +184,12 @@ public class AddPartyActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 uploadImage();
+            }
+        });
+        mLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setLocation();
             }
         });
         mSubmitButton.setOnClickListener(new View.OnClickListener() {
@@ -410,83 +442,18 @@ public class AddPartyActivity extends AppCompatActivity {
         }
     }
 
-    private void onSubmit(){
-        mParty = new Party(mPartyName.getText().toString(), mPartyDescription.getText().toString(),
-                mPartyLocation.getText().toString(), mStartDateText.getText().toString(), mEndDateText.getText().toString());
-        String accessToken = "";
-        SharedPreferences  mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
-        if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
-            accessToken = mPrefs.getString("access_token", "");
-        }
-        /*
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        mImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        final byte[] imageData = baos.toByteArray();
-        final String encodedImage = Base64.encodeToString(imageData, Base64.DEFAULT);*/
-        Log.d("ACCESS_TOKEN", accessToken);
-        String url = "http://party-app-dev.us-west-2.elasticbeanstalk.com/parties/";
-        final String finalAccessToken = accessToken;
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>()
-                {
-                    @Override
-                    public void onResponse(String response) {
-                        // response
-                        Log.d("Response", response);
-                        finish();
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // error
-                        Log.d("Error.Response", error.toString());
-                        Log.d("ACCESS_TOKEN", "whatever");
-                    }
-                }
-        )
-
-            {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("Authorization", "Bearer " + finalAccessToken);
-                return params;
-            }
-
-            @Override
-            public Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                Log.d("STARTTIME", mHiddenStartDate.toString());
-                Log.d("ENDTIME", mHiddenEndDate.toString());
-                params.put("name", mPartyName.getText().toString());
-                params.put("description", mPartyDescription.getText().toString());
-                //params.put("location", mPartyLocation.getText().toString());
-                params.put("lat", ".001");
-                params.put("lng", ".001");
-                params.put("start_time", mHiddenStartDate.getText().toString());
-                params.put("end_time", mHiddenEndDate.getText().toString());
-                //params.put("image", encodedImage);
-                return params;
-            }
-
-        };
-        queue.add(postRequest);
-
-    }
     private void cancel(){
         finish();
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
-        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode) {
             case IMAGE_REQUEST:
                 if(resultCode == RESULT_OK){
-                    Uri selectedImage = imageReturnedIntent.getData();
-                    mImageUri = imageReturnedIntent.getData();
+                    Uri selectedImage = data.getData();
+                    mImageUri = data.getData();
                     mPartyImage.setImageURI(selectedImage);
                     mPartyImage.requestLayout();
                     //mPartyImage.getLayoutParams().height = 100;
@@ -503,9 +470,52 @@ public class AddPartyActivity extends AppCompatActivity {
                     cursor.close();
 
                     File file = new File(filePath);
-                    //File file = new File(mImageUri.getPath());
+                    /*
                     RequestBody reqFile = RequestBody.create(MediaType.parse("image/jpeg"), file);
-                    mImageRequestBody = MultipartBody.Part.createFormData("image", file.getName(), reqFile);
+                    mImageRequestBody = MultipartBody.Part.createFormData("image", file.getName(), reqFile);*/
+
+                    Disposable mydisp = new Compressor(this)
+                            .setQuality(75)
+                            .compressToFileAsFlowable(file)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(t -> {
+                                Log.d("HOPFULLY", "THIS ONLY GETS CALLED ONCE");
+                                RequestBody reqFile = RequestBody.create(MediaType.parse("image/jpeg"), t);
+                                mImageRequestBody = MultipartBody.Part.createFormData("image", t.getName(), reqFile);
+                            }, e -> {
+
+                            });
+                    compositeDisposable.add(mydisp);
+
+                }
+                break;
+
+            case PLACE_AUTOCOMPLETE_REQUEST_CODE:
+                if (resultCode == RESULT_OK) {
+                    Place place = PlaceAutocomplete.getPlace(this, data);
+                    mLocationText.setText(place.getAddress());
+                    mPlace = place;
+
+                    Geocoder myg = new Geocoder(this);
+                    try {
+                        List<Address> myaddr = myg.getFromLocation(place.getLatLng().latitude, place.getLatLng().longitude, 1);
+                        String addr = "";
+                        for (int i=0;i<=myaddr.get(0).getMaxAddressLineIndex();i++){
+                            addr += myaddr.get(0).getAddressLine(i);
+                        }
+                        Log.d("Place", addr);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    Log.i("PLACE", "Place: " + place.getName());
+                } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                    Status status = PlaceAutocomplete.getStatus(this, data);
+                    Log.d("STATUS", status.toString());
+                } else if (resultCode == RESULT_CANCELED) {
+                    // The user canceled the operation.
+                    Log.d("ErROR", "canceled");
                 }
                 break;
 
@@ -518,11 +528,14 @@ public class AddPartyActivity extends AppCompatActivity {
         if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
             accessToken = mPrefs.getString("access_token", "");
         }
+        if (mPlace==null || mPartyName.getText().equals("")){
+            return;
+        }
 
         RequestBody name = RequestBody.create(MediaType.parse("text/plain"), mPartyName.getText().toString());
         RequestBody description = RequestBody.create(MediaType.parse("text/plain"), mPartyDescription.getText().toString());
-        RequestBody lat = RequestBody.create(MediaType.parse("text/plain"), "37.422476");
-        RequestBody lng = RequestBody.create(MediaType.parse("text/plain"), "-122.084249");
+        RequestBody lat = RequestBody.create(MediaType.parse("text/plain"), mPlace.getLatLng().latitude+"");
+        RequestBody lng = RequestBody.create(MediaType.parse("text/plain"), mPlace.getLatLng().longitude+"");
         RequestBody startDate = RequestBody.create(MediaType.parse("text/plain"), mHiddenStartDate.getText().toString());
         RequestBody endDate = RequestBody.create(MediaType.parse("text/plain"), mHiddenEndDate.getText().toString());
 
@@ -530,18 +543,15 @@ public class AddPartyActivity extends AppCompatActivity {
         req.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
-                Log.d("RESPONSE", response.message());
+                finish();
             }
-
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 t.printStackTrace();
             }
         });
     }
-    /*
-    THIS IS ALL TEST CODE
-     */
+
     private void setupretrofit(){
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -550,6 +560,28 @@ public class AddPartyActivity extends AppCompatActivity {
         // Change base URL to your upload server URL.
         service = new Retrofit.Builder().baseUrl("http://party-app-dev.us-west-2.elasticbeanstalk.com").client(client).build().create(Service.class);
 
+    }
+
+    private void setLocation(){
+
+        try {
+            Intent intent =
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+                            .build(this);
+            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+        } catch (GooglePlayServicesRepairableException e) {
+            // TODO: Handle the error.
+            Log.d("ERROR", "MORE ERRORS");
+        } catch (GooglePlayServicesNotAvailableException e) {
+            // TODO: Handle the error.
+            Log.d("NEED TO ADD KEY", "ADD API KEY");
+        }
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        compositeDisposable.clear();
     }
 
 }

@@ -247,6 +247,7 @@ public class HostPartyActivity extends AppCompatActivity {
         if (mPrefs.contains("facebook_id")){
             facebook_id = mPrefs.getString("facebook_id", "");
         }
+        Log.d("EXTRAMETHODHITTING", "EXTRA");
         GraphRequest request2 = GraphRequest.newGraphPathRequest(
                 AccessToken.getCurrentAccessToken(),
                 "/"+facebook_id+"/friends",
@@ -277,7 +278,13 @@ public class HostPartyActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        compositeDisposable.dispose();
+        compositeDisposable.clear();
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        compositeDisposable.clear();
     }
 
 }

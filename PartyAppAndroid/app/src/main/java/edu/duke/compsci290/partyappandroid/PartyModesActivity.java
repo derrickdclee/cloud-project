@@ -10,6 +10,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -35,7 +36,7 @@ public class PartyModesActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
-        adapter.setNdefPushMessage(null, this, this);
+        //adapter.setNdefPushMessage(null, this, this);
         setContentView(R.layout.activity_party_modes);
         mHostButton = findViewById(R.id.host_mode_button);
         mBouncerButton = findViewById(R.id.bouncer_mode_button);
@@ -47,6 +48,7 @@ public class PartyModesActivity extends AppCompatActivity {
                 goToHostMode();
             }
         });
+        mInviteeButton.setText("Invitee Mode");
         mInviteeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -54,9 +56,8 @@ public class PartyModesActivity extends AppCompatActivity {
             }
         });
         mBouncerButton.setText("Bouncer Mode");
-        mInviteeButton.setText("Invitee Mode");
         getLocationPermission();
-
+        Log.d("DOES THIS HIT", "UGGHHH");
 
         GraphRequest request = GraphRequest.newMeRequest(
                 AccessToken.getCurrentAccessToken(),
@@ -70,6 +71,7 @@ public class PartyModesActivity extends AppCompatActivity {
                         String email = "";
                         try{
                             id = object.getString("id");
+                            Log.d("GETTING HIT?", id);
                             email = object.getString("email");
                             name = object.getString("name");
                             SharedPreferences myPreferences = getSharedPreferences("app_tokens", MODE_PRIVATE);
@@ -94,11 +96,12 @@ public class PartyModesActivity extends AppCompatActivity {
         this.startActivity(intent);
     }
     private void goToInviteeMode(){
+        Log.d("IS THIS GETTING CALLED", "I DUNNO");
         if (!mLocationPermissionGranted){
             getLocationPermission();
             return;
         }
-        Intent intent = new Intent(this, PartyCheckInActivity.class);
+        Intent intent = new Intent(this, InviteeActivity.class);
         if (mUser != null){
             intent.putExtra("user_object", mUser);
             this.startActivity(intent);
@@ -109,13 +112,19 @@ public class PartyModesActivity extends AppCompatActivity {
         super.onResume();
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-        nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
+        /*
+        FIX THIS AFTER
+         */
+        //nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
     }
     @Override
     public void onPause() {
         super.onPause();
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        nfcAdapter.disableForegroundDispatch(this);
+        /*
+        FIX THIS AFTER
+         */
+        //nfcAdapter.disableForegroundDispatch(this);
     }
     @Override
     public void onNewIntent(Intent intent) {

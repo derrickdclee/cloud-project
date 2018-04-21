@@ -84,17 +84,25 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_marginRight="10dp"
+                    android:layout_weight="0"
                     android:text="Location"
                     android:textStyle="bold" />
 
-                <EditText
-                    android:id="@+id/add_location_box"
+                <TextView
+                    android:id="@+id/chosen_location_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ems="10"
-                    android:inputType="textPersonName" />
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/choose_location_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="0"
+                    android:background="@android:drawable/ic_dialog_map"
+                    android:backgroundTint="?attr/colorButtonNormal" />
+
             </LinearLayout>
 
             <LinearLayout
