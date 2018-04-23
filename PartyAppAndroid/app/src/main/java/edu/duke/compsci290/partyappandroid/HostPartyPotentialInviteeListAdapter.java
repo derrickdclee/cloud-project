@@ -99,9 +99,7 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
     }
 
     private void addFriendToParty(FacebookUser friend){
-        Log.d("DOES THIS HIT", "yes it does");
         int indexToRemove = mDisplayedUsers.indexOf(friend);
-
         String accessToken = "";
         SharedPreferences mPrefs = mContext.getSharedPreferences("app_tokens", MODE_PRIVATE);
         if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
@@ -121,7 +119,7 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
                     e.printStackTrace();
                 });*/
 
-
+        Log.d("ATTEMPTING", "TO INVITE FRIEND");
         retrofit2.Call<okhttp3.ResponseBody> req = service.inviteUser("Bearer "+accessToken, friend.getId(), mParty.getPartyId());
         req.enqueue(new Callback<ResponseBody>() {
             @Override

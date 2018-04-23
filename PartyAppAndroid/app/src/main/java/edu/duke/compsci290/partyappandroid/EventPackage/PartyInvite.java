@@ -3,17 +3,19 @@ package edu.duke.compsci290.partyappandroid.EventPackage;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
 /**
  * Created by kennethkoch on 4/20/18.
  */
 
-public class PartyInvite {
+public class PartyInvite implements Serializable{
     @SerializedName("id")
     @Expose
     private String id;
     @SerializedName("host")
     @Expose
-    private String host;
+    private DjangoUser host;
     @SerializedName("name")
     @Expose
     private String name;
@@ -46,10 +48,10 @@ public class PartyInvite {
         return id;
     }
 
-    public void setHost(String host){
+    public void setHost(DjangoUser host){
         this.host = host;
     }
-    public String getHost(){
+    public DjangoUser getHost(){
         return host;
     }
 

@@ -98,11 +98,13 @@ public class PartyModesActivity extends AppCompatActivity {
     private void goToInviteeMode(){
         Log.d("IS THIS GETTING CALLED", "I DUNNO");
         if (!mLocationPermissionGranted){
+            Log.d("THIS IS THE ISSUE", "oh");
             getLocationPermission();
             return;
         }
         Intent intent = new Intent(this, InviteeActivity.class);
         if (mUser != null){
+            Log.d("THIS HITS", "thankfully");
             intent.putExtra("user_object", mUser);
             this.startActivity(intent);
         }

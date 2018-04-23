@@ -94,7 +94,7 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         //holder.mFriendName.setText(mDisplayedUsers.get(position).getUserName());
-        holder.mFriendName.setText(mDisplayedInvitees.get(position).getInvitee());
+        holder.mFriendName.setText(mDisplayedInvitees.get(position).getInvitee().getFull_name());
         Picasso.get().load("http://graph.facebook.com/" + mDisplayedInvitees.get(position).getFacebook_id() + "/picture?type=square").into(holder.mFacebookThumbnail);
         holder.mLinearLayout.removeView(holder.mAddButton);
 

@@ -13,7 +13,7 @@ public class UserInvitation {
     private String id;
     @SerializedName("invitee")
     @Expose
-    private String invitee;
+    private DjangoUser invitee;
     @SerializedName("party")
     @Expose
     private String party;
@@ -33,10 +33,10 @@ public class UserInvitation {
     public String getId(){
         return id;
     }
-    public void setInvitee(String invitee){
+    public void setInvitee(DjangoUser invitee){
         this.invitee = invitee;
     }
-    public String getInvitee(){
+    public DjangoUser getInvitee(){
         return invitee;
     }
     public void setParty(String party){

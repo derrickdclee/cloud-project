@@ -118,7 +118,7 @@ public class HostPartyActivity extends AppCompatActivity {
 
         rv = findViewById(R.id.fb_friends_recycler_view);
         rv.setLayoutManager(new LinearLayoutManager(this));
-        rv.setAdapter(new HostPartyAdapter(null, null, null, false));
+        rv.setAdapter(new HostPartyPotentialInviteeListAdapter(null, null, null));
 
 
         Disposable serviceCall = executeRx2java().subscribe(t->{
@@ -133,10 +133,10 @@ public class HostPartyActivity extends AppCompatActivity {
                     iterator.remove();
                 }
             }
-            rv.setAdapter(new HostPartyAdapter(this, (ArrayList<FacebookUser>) friendsToInvite, mParty, false));
+            rv.setAdapter(new HostPartyPotentialInviteeListAdapter(this, (ArrayList<FacebookUser>) friendsToInvite, mParty));
         });
         compositeDisposable.add(serviceCall);
-        //testFacebookShit();
+        //randomtest();
     }
 
 
@@ -152,11 +152,11 @@ public class HostPartyActivity extends AppCompatActivity {
     private void refreshData(){
         Disposable serviceCall = executeRx2java().subscribe(t->{
             List<FacebookUser> friendsToInvite = t.fbUsers;
-            List<FacebookUser> invited = new ArrayList<FacebookUser>();
+            List<FacebookUser> invited = new ArrayList<>();
             for (int i=0;i<t.uInvitations.size();i++){
                 FacebookUser newlyInvited = new FacebookUser();
                 newlyInvited.setId(t.uInvitations.get(i).getFacebook_id());
-                newlyInvited.setName(t.uInvitations.get(i).getInvitee());
+                newlyInvited.setName(t.uInvitations.get(i).getInvitee().getFull_name());
                 invited.add(newlyInvited);
             }
             Set<String> invitedIds = new HashSet<>();
@@ -237,7 +237,8 @@ public class HostPartyActivity extends AppCompatActivity {
 
 
     }
-    private void testFacebookShit(){
+    public void randomtest(){
+        Log.d("PARTYID", mParty.getPartyId());
         String accessToken = "";
         String facebook_id = "";
         SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
@@ -247,19 +248,25 @@ public class HostPartyActivity extends AppCompatActivity {
         if (mPrefs.contains("facebook_id")){
             facebook_id = mPrefs.getString("facebook_id", "");
         }
-        Log.d("EXTRAMETHODHITTING", "EXTRA");
-        GraphRequest request2 = GraphRequest.newGraphPathRequest(
-                AccessToken.getCurrentAccessToken(),
-                "/"+facebook_id+"/friends",
-                new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        // Insert your code here
-                        Log.d("GOD FUCKING DSMMIT", "SERIOUS ISSUE");
-                    }
+        GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(), "/" + facebook_id + "/friends");
+        Gson gson = new Gson();
+        Disposable friendsObserver = Single.defer(()->Single.just(request.executeAndWait()))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(t -> {
+                    Log.d("WTF", t.toString());
+                    ArrayList<FacebookUser> friends = gson.fromJson(t.getJSONObject().getJSONArray("data").toString(), new TypeToken<ArrayList<FacebookUser>>(){}.getType());
+                    return friends;
+                })
+                .subscribe(t-> {
+                    Log.d("t works", "tworks");
                 });
-        request2.executeAsync();
 
+        Single<List<UserInvitation>> invitationsObserver = service.getUsersInvited("Bearer "+accessToken, mParty.getPartyId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        compositeDisposable.add(friendsObserver);
     }
 
 
