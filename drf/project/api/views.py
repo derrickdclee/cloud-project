@@ -102,10 +102,12 @@ class InvitationList(generics.ListCreateAPIView):
         party_id = self.request.data.get('party_id')
         if party_id is None:
             raise ValidationError("'party_id' was not provided.")
+
         try:
             party = Party.objects.get(pk=party_id)
         except Party.DoesNotExist:
             raise ValidationError("The party does not exist.")
+
         serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
 
 
@@ -142,8 +144,13 @@ class InvitationCheckin(generics.UpdateAPIView):
             invitation = Invitation.objects.get(pk=kwargs['pk'])
         except Invitation.DoesNotExist:
             raise ValidationError("The invitation does not exist.")
+
         self.check_object_permissions(request, invitation)
+
+        if invitation.has_checkedin:
+            raise ValidationError("You've already checked in.")
         invitation.has_checkedin = True
+
         invitation.save()
         serializer = InvitationSerializer(invitation)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -7,7 +7,7 @@ from django.utils import timezone
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name')
+        fields = ('id', 'full_name')
 
     full_name = serializers.SerializerMethodField(method_name='get_user_full_name')
 
@@ -19,7 +19,7 @@ class PartySerializer(serializers.ModelSerializer):
     class Meta:
         model = Party
         fields = ('id', 'host', 'bouncers', 'invitees', 'name', 'description', 'image', 'lat', 'lng',
-                  'start_time', 'end_time', 'deleted',)
+                  'start_time', 'end_time',)
 
     id = serializers.ReadOnlyField()
     host = UserSerializer(read_only=True)
