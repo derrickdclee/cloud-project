@@ -36,6 +36,10 @@ def lookup_user_with_facebook_id(facebook_id):
     return user_fb.user
 
 
+def lookup_facebook_id(user):
+    return user.social_auth.get(provider='facebook').uid
+
+
 class PartyList(generics.ListCreateAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
@@ -52,16 +56,42 @@ class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (Or(IsAdmin, IsHostOfPartyObject), )
 
 
-class BouncerList(APIView):
+class AddBouncer(APIView):
     permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithURLParam),)
 
-    def post(self, request, *args, **kwargs):
-        party = Party.objects.get(pk=kwargs['pk'])
+    def put(self, request, *args, **kwargs):
+        try:
+            party = Party.objects.get(pk=kwargs['pk'])
+        except Party.DoesNotExist:
+            raise ValidationError("The party does not exist.")
+
         bouncer_id = request.data.get('bouncer_id')
         if bouncer_id is None:
             raise ValidationError("'bouncer_id' was not provided.")
-        bouncer = User.objects.get(pk=bouncer_id)
+
+        try:
+            bouncer = User.objects.get(pk=bouncer_id)
+        except User.DoesNotExist:
+            raise ValidationError("The user does not exists.")
+
         party.bouncers.add(bouncer)
+        serializer = PartySerializer(party)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class RequestToJoinParty(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def put(self, request, *args, **kwargs):
+        try:
+            party = Party.objects.get(pk=kwargs['pk'])
+        except Party.DoesNotExist:
+            raise ValidationError("The party does not exist.")
+
+        if request.user in party.invitees.all():
+            raise ValidationError("You've already been invited.")
+
+        party.requesters.add(request.user)
         serializer = PartySerializer(party)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -100,13 +130,44 @@ class InvitationList(generics.ListCreateAPIView):
         invitee = lookup_user_with_facebook_id(invitee_facebook_id)
 
         party_id = self.request.data.get('party_id')
-        if party_id is None:
-            raise ValidationError("'party_id' was not provided.")
+        party = Party.objects.get(pk=party_id)
 
-        try:
-            party = Party.objects.get(pk=party_id)
-        except Party.DoesNotExist:
-            raise ValidationError("The party does not exist.")
+        """
+        Not the best solution... but to avoid internal server error when unique_together on Invitation model fails
+        """
+        potential_conflict = Invitation.objects.filter(invitee=invitee, party=party)
+        if len(potential_conflict) > 0 :
+            raise ValidationError("The invitee, party pair exists already.")
+
+        serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
+
+
+class GrantRequestToJoinParty(generics.CreateAPIView):
+    queryset = Invitation.objects.all()
+    serializer_class = InvitationSerializer
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithParam), )
+
+    def perform_create(self, serializer):
+        invitee_id = self.request.data.get('invitee_id')
+        if invitee_id is None:
+            raise ValidationError("'invitee_id' was not provided.")
+        invitee = User.objects.get(pk=invitee_id)
+
+        party_id = self.request.data.get('party_id')
+        party = Party.objects.get(pk=party_id)
+
+        if invitee not in party.requesters.all():
+            raise ValidationError("There was no request by this user.")
+
+        """
+        Not the best solution... but to avoid internal server error when unique_together on Invitation model fails
+        """
+        potential_conflict = Invitation.objects.filter(invitee=invitee, party=party)
+        if len(potential_conflict) > 0:
+            raise ValidationError("The invitee, party pair exists already.")
+
+        party.requesters.remove(invitee)
+        invitee_facebook_id = lookup_facebook_id(invitee)
 
         serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
 

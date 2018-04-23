@@ -74,7 +74,10 @@ class IsHostOfPartyWithParam(permissions.BasePermission):
         party_id = request.data.get('party_id')
         if party_id is None:
             return False
-        party = Party.objects.get(pk=party_id)
+        try:
+            party = Party.objects.get(pk=party_id)
+        except Party.DoesNotExist:
+            return False
         return party.host == request.user
 
 

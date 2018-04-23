@@ -18,13 +18,14 @@ class UserSerializer(serializers.ModelSerializer):
 class PartySerializer(serializers.ModelSerializer):
     class Meta:
         model = Party
-        fields = ('id', 'host', 'bouncers', 'invitees', 'name', 'description', 'image', 'lat', 'lng',
+        fields = ('id', 'host', 'bouncers', 'invitees', 'requesters', 'name', 'description', 'image', 'lat', 'lng',
                   'start_time', 'end_time',)
 
     id = serializers.ReadOnlyField()
     host = UserSerializer(read_only=True)
     bouncers = UserSerializer(many=True, read_only=True)  # read_only required for nested serializer
     invitees = UserSerializer(many=True, read_only=True)
+    requesters = UserSerializer(many=True, read_only=True)
     image = serializers.ImageField(use_url=True, required=False)
 
     def validate(self, data):

@@ -15,6 +15,7 @@ class Party(models.Model):
     # need the related_name fields to be present in bouncers, invitees
     bouncers = models.ManyToManyField('auth.User', related_name='bouncer_parties')
     invitees = models.ManyToManyField('auth.User', related_name='invitee_parties', through='Invitation')
+    requesters = models.ManyToManyField('auth.User', related_name='requester_parties')
     name = models.CharField(max_length=100)
     description = models.TextField()
     image = models.ImageField(upload_to=file_util.party_directory_path, blank=True, null=True)
