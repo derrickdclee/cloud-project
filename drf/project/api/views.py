@@ -193,3 +193,17 @@ class InvitationToPartyList(generics.ListAPIView):
     def get_queryset(self):
         party_id = self.kwargs['party_id']
         return Invitation.objects.filter(party=party_id)
+
+
+class MyInvitationToPartyDetail(generics.RetrieveAPIView):
+    serializer_class = InvitationSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def get_object(self):
+        party_id = self.kwargs['party_id']
+        invitee_id = self.request.user.id
+        try:
+            invitation = Invitation.objects.get(party_id=party_id, invitee_id=invitee_id)
+        except Invitation.DoesNotExist:
+            raise ValidationError("Invalid party_id, invitee_id pair.")
+        return invitation

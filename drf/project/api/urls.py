@@ -19,12 +19,10 @@ urlpatterns = [
         views.InvitationCheckin.as_view()),
     url(r'^parties/hosted/(?P<user_id>[0-9]+)/$', views.HostedPartyList.as_view()),
     url(r'^parties/hosted/me/$', views.MyHostedPartyList.as_view()),
-    url(r'^parties/invited/(?P<user_id>[0-9]+)/$',
-        views.InvitedPartyList.as_view()),
-    url(r'^parties/invited/me/$',
-        views.MyInvitedPartyList.as_view()),
-    url(r'^invitations/to-party/(?P<party_id>[0-9]+)/$',
-        views.InvitationToPartyList.as_view()),
+    url(r'^parties/invited/(?P<user_id>[0-9]+)/$', views.InvitedPartyList.as_view()),
+    url(r'^parties/invited/me/$', views.MyInvitedPartyList.as_view()),
+    url(r'^invitations/to-party/(?P<party_id>[0-9]+)/$', views.InvitationToPartyList.as_view()),
+    url(r'^invitations/to-party/(?P<party_id>[0-9]+)/of-user/me/$', views.MyInvitationToPartyDetail.as_view()),
 ]
 
 
