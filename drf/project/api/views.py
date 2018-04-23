@@ -16,7 +16,7 @@ from project.api.permissions import IsAdmin, IsGetRequest, IsSameUserObject, IsS
     IsBouncerOfInvitationObject, IsInviteeOfInvitationObject, IsHostOrBouncer
 from project.api.models import Party, Invitation
 from django.contrib.auth.models import User
-from project.api.serializers import PartySerializer, UserSerializer, InvitationSerializer
+from project.api.serializers import PartySerializer, PartySummarySerializer, UserSerializer, InvitationSerializer
 
 
 @api_view(['GET'])
@@ -118,6 +118,8 @@ class InvitationDetail(generics.RetrieveDestroyAPIView):
 
 
 class InvitationRsvp(generics.UpdateAPIView):
+    queryset = Invitation.objects.all()
+    serializer_class = InvitationSerializer
     permission_classes = (Or(IsAdmin, IsInviteeOfInvitationObject),)
 
     def put(self, request, *args, **kwargs):
@@ -157,7 +159,7 @@ class InvitationCheckin(generics.UpdateAPIView):
 
 
 class HostedPartyList(generics.ListAPIView):
-    serializer_class = PartySerializer
+    serializer_class = PartySummarySerializer
     permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithURLParam),)
 
     def get_queryset(self):
@@ -174,7 +176,7 @@ class MyHostedPartyList(HostedPartyList):
 
 
 class InvitedPartyList(generics.ListAPIView):
-    serializer_class = PartySerializer
+    serializer_class = PartySummarySerializer
     permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithURLParam),)
 
     def get_queryset(self):
@@ -203,6 +205,7 @@ class InvitationToPartyList(generics.ListAPIView):
 
 
 class MyInvitationToPartyDetail(generics.RetrieveAPIView):
+    queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
     permission_classes = (permissions.IsAuthenticated, )
 

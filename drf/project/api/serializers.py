@@ -35,6 +35,17 @@ class PartySerializer(serializers.ModelSerializer):
         return data
 
 
+class PartySummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Party
+        fields = ('id', 'host', 'name', 'description', 'image', 'lat', 'lng',
+                  'start_time', 'end_time',)
+
+    id = serializers.ReadOnlyField()
+    host = UserSerializer(read_only=True)
+    image = serializers.ImageField(use_url=True, required=False)
+
+
 class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation
