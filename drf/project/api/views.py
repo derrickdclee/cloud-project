@@ -151,13 +151,13 @@ class GrantRequestToJoinParty(generics.CreateAPIView):
         invitee_id = self.request.data.get('invitee_id')
         if invitee_id is None:
             raise ValidationError("'invitee_id' was not provided.")
-        invitee = User.objects.get(pk=invitee_id)
+        try:
+            invitee = User.objects.get(pk=invitee_id)
+        except User.DoesNotExist:
+            raise ValidationError("The user does not exist.")
 
         party_id = self.request.data.get('party_id')
         party = Party.objects.get(pk=party_id)
-
-        if invitee not in party.requesters.all():
-            raise ValidationError("There was no request by this user.")
 
         """
         Not the best solution... but to avoid internal server error when unique_together on Invitation model fails
@@ -166,6 +166,8 @@ class GrantRequestToJoinParty(generics.CreateAPIView):
         if len(potential_conflict) > 0:
             raise ValidationError("The invitee, party pair exists already.")
 
+        if invitee not in party.requesters.all():
+            raise ValidationError("There was no request by this user.")
         party.requesters.remove(invitee)
         invitee_facebook_id = lookup_facebook_id(invitee)
 
