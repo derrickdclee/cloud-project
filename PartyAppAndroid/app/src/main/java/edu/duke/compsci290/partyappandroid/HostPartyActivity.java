@@ -3,7 +3,6 @@ package edu.duke.compsci290.partyappandroid;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.FaceDetector;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -31,7 +30,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.FacebookUser;
 import edu.duke.compsci290.partyappandroid.EventPackage.InviteFilterStatus;
@@ -87,6 +85,7 @@ public class HostPartyActivity extends AppCompatActivity {
         final Button invitedButton = findViewById(R.id.invited_button);
         final Button rsvpedButton = findViewById(R.id.rsvped_button);
         final Button checkedInButton = findViewById(R.id.checked_in_button);
+        final Button bouncerButton = findViewById(R.id.bouncers_button);
         selectedButton = toInviteButton;
         toInviteButton.setBackgroundColor(getResources().getColor(R.color.colorAccent));
 
@@ -115,6 +114,13 @@ public class HostPartyActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 selectFriendsDisplay(checkedInButton);
+            }
+        });
+
+        bouncerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                selectFriendsDisplay(bouncerButton);
             }
         });
 
@@ -188,6 +194,7 @@ public class HostPartyActivity extends AppCompatActivity {
                     checkedin.removeIf(user-> !user.getHas_rsvped());
                     rv.setAdapter(new HostPartyInvitedListAdapter(this, (ArrayList<UserInvitation>)checkedin, mParty, InviteFilterStatus.CHECKEDIN));
                     break;
+                case R.id.bouncers_button:
             }
 
         });

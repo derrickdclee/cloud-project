@@ -32,6 +32,8 @@
                     android:id="@+id/to_invite_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="1dp"
+                    android:layout_marginRight="1dp"
                     android:layout_weight="1"
                     android:background="@color/colorPrimary"
                     android:text="To Invite"
@@ -41,6 +43,7 @@
                     android:id="@+id/invited_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginRight="1dp"
                     android:layout_weight="1"
                     android:background="@color/colorPrimary"
                     android:text="Invited"
@@ -55,20 +58,41 @@
                     android:text="RSVP'ed"
                     android:textSize="12sp" />
 
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
                 <Button
                     android:id="@+id/checked_in_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginRight="1dp"
                     android:layout_weight="1"
                     android:background="@color/colorPrimary"
                     android:text="Checked In"
+                    android:textSize="12sp" />
+                <Button
+                    android:id="@+id/bouncers_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPrimary"
+                    android:text="Bouncers"
                     android:textSize="12sp" />
             </LinearLayout>
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/fb_friends_recycler_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent" >
+
+            </android.support.v7.widget.RecyclerView>
+
+
         </LinearLayout>
     </ScrollView>
 </android.support.constraint.ConstraintLayout>
