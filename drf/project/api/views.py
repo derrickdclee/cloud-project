@@ -84,15 +84,11 @@ class AddBouncer(APIView):
         except Party.DoesNotExist:
             raise ValidationError("The party does not exist.")
 
-        bouncer_id = request.data.get('bouncer_id')
-        if bouncer_id is None:
+        bouncer_facebook_id = request.data.get('bouncer_facebook_id')
+        if bouncer_facebook_id is None:
             raise ValidationError("'bouncer_id' was not provided.")
 
-        try:
-            bouncer = User.objects.get(pk=bouncer_id)
-        except User.DoesNotExist:
-            raise ValidationError("The user does not exists.")
-
+        bouncer = lookup_user_with_facebook_id(bouncer_facebook_id)
         party.bouncers.add(bouncer)
         serializer = PartySerializer(party)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
