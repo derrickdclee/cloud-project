@@ -57,7 +57,6 @@ class PartyList(generics.ListCreateAPIView):
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    # TODO: should I add IsAuthenticated here?
     permission_classes = (Or(IsAdmin, And(IsAuth, IsHostOfPartyObjectOrReadOnly)), )
 
     def get_serializer_class(self):
@@ -90,6 +89,10 @@ class AddBouncer(APIView):
         bouncer = lookup_user_with_facebook_id(bouncer_facebook_id)
         if bouncer not in party.invitees.all():
             raise ValidationError("You must invite this user first before adding them as a bouncer.")
+        invitation = Invitation.objects.get(party=party, invitee=bouncer)
+        if not invitation.has_rsvped:
+            raise ValidationError("This invitee has not RSVPed yet.")
+        invitation.delete()
         party.bouncers.add(bouncer)
         serializer = PartySerializer(party)
         return Response(serializer.data, status=status.HTTP_200_OK)
