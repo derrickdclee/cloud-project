@@ -16,18 +16,17 @@ class IsAdmin(permissions.IsAdminUser):
         return super(IsAdmin, self).has_permission(request, view)
 
 
+class IsAuth(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        return super(IsAuth, self).has_permission(request, view)
+
+
 class IsGetRequest(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.method == 'GET'
-
-
-class IsHostOfPartyObjectOrReadOnly(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        test = IsHostOfPartyObject()
-        if test.has_object_permission(request, view, obj):
-            return True
-        else:
-            return request.method == 'GET'
 
 
 class IsSameUserObject(permissions.BasePermission):
@@ -59,6 +58,15 @@ class IsHostOfPartyObject(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.host == request.user
+
+
+class IsHostOfPartyObjectOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method == 'GET':
+            return True
+        else:
+            test = IsHostOfPartyObject()
+            return test.has_object_permission(request, view, obj)
 
 
 class IsHostOfPartyWithURLParam(permissions.BasePermission):

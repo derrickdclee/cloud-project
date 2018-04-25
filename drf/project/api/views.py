@@ -57,8 +57,7 @@ class PartyList(generics.ListCreateAPIView):
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    # TODO: should I add IsAuthenticated here?
-    permission_classes = (Or(IsAdmin, IsHostOfPartyObjectOrReadOnly), )
+    permission_classes = (Or(IsAdmin, And(IsAuth, IsHostOfPartyObjectOrReadOnly)), )
 
     def get_serializer_class(self):
         # for k, v in self.__dict__.items():
@@ -86,12 +85,17 @@ class AddBouncer(APIView):
 
         bouncer_facebook_id = request.data.get('bouncer_facebook_id')
         if bouncer_facebook_id is None:
-            raise ValidationError("'bouncer_id' was not provided.")
-
+            raise ValidationError("'bouncer_facebook_id' was not provided.")
         bouncer = lookup_user_with_facebook_id(bouncer_facebook_id)
+        if bouncer not in party.invitees.all():
+            raise ValidationError("You must invite this user first before adding them as a bouncer.")
+        invitation = Invitation.objects.get(party=party, invitee=bouncer)
+        if not invitation.has_rsvped:
+            raise ValidationError("This invitee has not RSVPed yet.")
+        invitation.delete()
         party.bouncers.add(bouncer)
         serializer = PartySerializer(party)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RequestToJoinParty(APIView):
@@ -108,7 +112,27 @@ class RequestToJoinParty(APIView):
 
         party.requesters.add(request.user)
         serializer = PartySerializer(party)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RejectRequestToJoinParty(APIView):
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithURLParam),)
+
+    def put(self, request, *args, **kwargs):
+        try:
+            party = Party.objects.get(pk=kwargs['pk'])
+        except Party.DoesNotExist:
+            raise ValidationError("The party does not exist.")
+
+        reject_id = request.data.get('reject_id')
+        if reject_id is None:
+            raise ValidationError("'reject_id' was not provided.")
+        reject = User.objects.get(pk=reject_id)
+        if reject not in party.requesters.all():
+            raise ValidationError("This user did not request to join the party.")
+        party.requesters.remove(reject)
+        serializer = PartySerializer(party)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserList(generics.ListAPIView):
@@ -151,7 +175,7 @@ class InvitationList(generics.ListCreateAPIView):
         Not the best solution... but to avoid internal server error when unique_together on Invitation model fails
         """
         potential_conflict = Invitation.objects.filter(invitee=invitee, party=party)
-        if len(potential_conflict) > 0 :
+        if len(potential_conflict) > 0:
             raise ValidationError("The invitee, party pair exists already.")
 
         serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
@@ -277,6 +301,26 @@ class MyInvitedPartyList(InvitedPartyList):
     def get_queryset(self):
         invitee_id = self.request.user.id
         return Party.objects.filter(invitees__id=invitee_id)
+
+
+class BouncingPartyList(generics.ListAPIView):
+    serializer_class = PartySummarySerializer
+    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithURLParam),)
+
+    def get_queryset(self):
+        bouncer_id = self.kwargs['user_id']
+        """
+        note this weird double underscore syntax for filtering on ManyToManyField
+        """
+        return Party.objects.filter(bouncers__id=bouncer_id)
+
+
+class MyBouncingPartyList(BouncingPartyList):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        bouncer_id = self.request.user.id
+        return Party.objects.filter(bouncers__id=bouncer_id)
 
 
 class InvitationToPartyList(generics.ListAPIView):
