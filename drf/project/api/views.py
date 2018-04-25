@@ -208,6 +208,10 @@ class InvitationRsvp(generics.UpdateAPIView):
 
         # we need to explicitly call this as we are overriding the put method
         self.check_object_permissions(request, invitation)
+
+        if invitation.has_rsvped:
+            raise ValidationError("You have already RSVPed.")
+
         invitation.has_rsvped = True
         invitation.save()
         serializer = InvitationSerializer(invitation)
@@ -227,10 +231,12 @@ class InvitationCheckin(generics.UpdateAPIView):
 
         self.check_object_permissions(request, invitation)
 
+        if not invitation.has_rsvped:
+            raise ValidationError("The user has not RSVPed yet.")
         if invitation.has_checkedin:
-            raise ValidationError("You've already checked in.")
-        invitation.has_checkedin = True
+            raise ValidationError("The user has already checked in.")
 
+        invitation.has_checkedin = True
         invitation.save()
         serializer = InvitationSerializer(invitation)
         return Response(serializer.data, status=status.HTTP_200_OK)
