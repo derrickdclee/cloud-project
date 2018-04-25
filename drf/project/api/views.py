@@ -9,13 +9,11 @@ from rest_framework.reverse import reverse
 from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from rest_framework.exceptions import ValidationError
 from rest_condition import And, Or, Not
+from django.contrib.auth.models import User
 from social_django.models import UserSocialAuth
 
-from project.api.permissions import IsAdmin, IsGetRequest, IsSameUserObject, IsSameUserWithURLParam, \
-    IsHostOfPartyObject, IsHostOfPartyWithURLParam, IsHostOfPartyWithParam, IsHostOfInvitationObject, \
-    IsBouncerOfInvitationObject, IsInviteeOfInvitationObject, IsHostOrBouncer
+from project.api.permissions import *
 from project.api.models import Party, Invitation
-from django.contrib.auth.models import User
 from project.api.serializers import PartySerializer, PartySummarySerializer, UserSerializer, InvitationSerializer
 
 
@@ -43,8 +41,14 @@ def lookup_facebook_id(user):
 class PartyList(generics.ListCreateAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    permission_classes = (Or(permissions.IsAdminUser, And(permissions.IsAuthenticated, Not(IsGetRequest))),)
+    permission_classes = (permissions.IsAuthenticated,)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return PartySummarySerializer
+        else:
+            return PartySerializer
 
     def perform_create(self, serializer):
         serializer.save(host=self.request.user)
@@ -53,7 +57,21 @@ class PartyList(generics.ListCreateAPIView):
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
-    permission_classes = (Or(IsAdmin, IsHostOfPartyObject), )
+    permission_classes = (Or(IsAdmin, IsHostOfPartyObjectOrReadOnly), )
+
+    def get_serializer_class(self):
+        # for k, v in self.__dict__.items():
+        #     print("{0}: {1}".format(k, v))
+        if self.request.method == 'GET':
+            party_id = self.kwargs['pk']
+            party = Party.objects.get(pk=party_id)
+            user = self.request.user
+            if user == party.host or user in party.bouncers.all() or user in party.invitees.all():
+                return PartySerializer
+            else:
+                return PartySummarySerializer
+        else:
+            return PartySerializer
 
 
 class AddBouncer(APIView):

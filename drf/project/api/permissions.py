@@ -21,6 +21,15 @@ class IsGetRequest(permissions.BasePermission):
         return request.method == 'GET'
 
 
+class IsHostOfPartyObjectOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        test = IsHostOfPartyObject()
+        if test.has_object_permission(request, view, obj):
+            return True
+        else:
+            return request.method == 'GET'
+
+
 class IsSameUserObject(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
@@ -102,6 +111,6 @@ class IsHostOrBouncer(permissions.BasePermission):
             party = Party.objects.get(pk=view.kwargs['party_id'])
         except Party.DoesNotExist:
             return False
-        # note that we need .all() on manytomanyfields
+        # note that we need .all() on ManyToManyFields
         return party.host == request.user or request.user in party.bouncers.all()
 
