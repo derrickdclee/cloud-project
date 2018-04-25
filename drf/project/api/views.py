@@ -178,7 +178,7 @@ class InvitationList(generics.ListCreateAPIView):
         if len(potential_conflict) > 0:
             raise ValidationError("The invitee, party pair exists already.")
 
-        serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
+        serializer.save(invitee=invitee, party=party)
 
 
 class GrantRequestToJoinParty(generics.CreateAPIView):
@@ -208,14 +208,14 @@ class GrantRequestToJoinParty(generics.CreateAPIView):
         if invitee not in party.requesters.all():
             raise ValidationError("There was no request by this user.")
         party.requesters.remove(invitee)
-        invitee_facebook_id = lookup_facebook_id(invitee)
 
-        serializer.save(invitee=invitee, party=party, facebook_id=invitee_facebook_id)
+        serializer.save(invitee=invitee, party=party)
 
 
 class InvitationDetail(generics.RetrieveDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
+    # TODO: add bouncer to permission_classes
     permission_classes = (Or(IsAdmin, Or(IsHostOfInvitationObject, IsInviteeOfInvitationObject)),)
 
 
