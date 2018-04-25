@@ -88,11 +88,11 @@ class AddBouncer(APIView):
         if bouncer_facebook_id is None:
             raise ValidationError("'bouncer_facebook_id' was not provided.")
         bouncer = lookup_user_with_facebook_id(bouncer_facebook_id)
-        if bouncer not in party.invitees:
+        if bouncer not in party.invitees.all():
             raise ValidationError("You must invite this user first before adding them as a bouncer.")
         party.bouncers.add(bouncer)
         serializer = PartySerializer(party)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RequestToJoinParty(APIView):
@@ -109,7 +109,27 @@ class RequestToJoinParty(APIView):
 
         party.requesters.add(request.user)
         serializer = PartySerializer(party)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RejectRequestToJoinParty(APIView):
+    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithURLParam),)
+
+    def put(self, request, *args, **kwargs):
+        try:
+            party = Party.objects.get(pk=kwargs['pk'])
+        except Party.DoesNotExist:
+            raise ValidationError("The party does not exist.")
+
+        reject_id = request.data.get('reject_id')
+        if reject_id is None:
+            raise ValidationError("'reject_id' was not provided.")
+        reject = User.objects.get(pk=reject_id)
+        if reject not in party.requesters.all():
+            raise ValidationError("This user did not request to join the party.")
+        party.requesters.remove(reject)
+        serializer = PartySerializer(party)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserList(generics.ListAPIView):
@@ -278,6 +298,26 @@ class MyInvitedPartyList(InvitedPartyList):
     def get_queryset(self):
         invitee_id = self.request.user.id
         return Party.objects.filter(invitees__id=invitee_id)
+
+
+class BouncingPartyList(generics.ListAPIView):
+    serializer_class = PartySummarySerializer
+    permission_classes = (Or(permissions.IsAdminUser, IsSameUserWithURLParam),)
+
+    def get_queryset(self):
+        bouncer_id = self.kwargs['user_id']
+        """
+        note this weird double underscore syntax for filtering on ManyToManyField
+        """
+        return Party.objects.filter(bouncers__id=bouncer_id)
+
+
+class MyBouncingPartyList(BouncingPartyList):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        bouncer_id = self.request.user.id
+        return Party.objects.filter(bouncers__id=bouncer_id)
 
 
 class InvitationToPartyList(generics.ListAPIView):

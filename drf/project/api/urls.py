@@ -8,6 +8,7 @@ urlpatterns = [
     url(r'^parties/(?P<pk>[0-9]+)/$', views.PartyDetail.as_view()),
     url(r'^parties/(?P<pk>[0-9]+)/bouncers/$', views.AddBouncer.as_view()),
     url(r'^parties/(?P<pk>[0-9]+)/request/$', views.RequestToJoinParty.as_view()),
+    url(r'^parties/(?P<pk>[0-9]+)/request/reject/$', views.RejectRequestToJoinParty.as_view()),
     url(r'^users/$', views.UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view()),
     url(r'^users/me/$', views.MyUserDetail.as_view()),
@@ -23,6 +24,8 @@ urlpatterns = [
     url(r'^parties/hosted/me/$', views.MyHostedPartyList.as_view()),
     url(r'^parties/invited/(?P<user_id>[0-9]+)/$', views.InvitedPartyList.as_view()),
     url(r'^parties/invited/me/$', views.MyInvitedPartyList.as_view()),
+    url(r'^parties/bouncing/(?P<user_id>[0-9]+)/$', views.BouncingPartyList.as_view()),
+    url(r'^parties/bouncing/me/$', views.MyBouncingPartyList.as_view()),
     url(r'^invitations/to-party/(?P<party_id>[0-9]+)/$', views.InvitationToPartyList.as_view()),
     url(r'^invitations/to-party/(?P<party_id>[0-9]+)/of-user/me/$', views.MyInvitationToPartyDetail.as_view()),
 ]
