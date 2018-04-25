@@ -57,6 +57,7 @@ class PartyList(generics.ListCreateAPIView):
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
     serializer_class = PartySerializer
+    # TODO: should I add IsAuthenticated here?
     permission_classes = (Or(IsAdmin, IsHostOfPartyObjectOrReadOnly), )
 
     def get_serializer_class(self):
@@ -66,7 +67,7 @@ class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
             party_id = self.kwargs['pk']
             party = Party.objects.get(pk=party_id)
             user = self.request.user
-            if user == party.host or user in party.bouncers.all() or user in party.invitees.all():
+            if user.is_staff or user == party.host or user in party.bouncers.all() or user in party.invitees.all():
                 return PartySerializer
             else:
                 return PartySummarySerializer
