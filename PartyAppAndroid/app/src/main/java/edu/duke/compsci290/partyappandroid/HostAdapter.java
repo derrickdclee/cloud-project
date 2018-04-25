@@ -1,8 +1,16 @@
 package edu.duke.compsci290.partyappandroid;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +26,9 @@ import org.w3c.dom.Text;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import edu.duke.compsci290.partyappandroid.EventPackage.MyDeletePartyListener;
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
+import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
 
 /**
@@ -27,9 +37,8 @@ import edu.duke.compsci290.partyappandroid.EventPackage.User;
 
 public class HostAdapter extends RecyclerView.Adapter<HostAdapter.ViewHolder> {
     private Context mContext;
-    private ArrayList<Party> mParties;
-    private ArrayList<User> mUserFriends;
-    public HostAdapter(Context context, ArrayList<Party> parties){
+    private ArrayList<PartyInvite> mParties;
+    public HostAdapter(Context context, ArrayList<PartyInvite> parties){
         mContext = context;
         mParties = parties;
     }
@@ -69,14 +78,20 @@ public class HostAdapter extends RecyclerView.Adapter<HostAdapter.ViewHolder> {
                 goToScannerActivity(mParties.get(partyHolder.getAdapterPosition()));
             }
         });
+        partyHolder.mDeleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                removeParty(mParties.get(partyHolder.getAdapterPosition()));
+            }
+        });
         return partyHolder;
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.mPartyName.setText(mParties.get(position).getPartyName());
-        holder.mPartyDescription.setText(mParties.get(position).getPartyDescription());
-        Picasso.get().load(mParties.get(position).getImageUri()).into(holder.mPartyImage);
+        holder.mPartyName.setText(mParties.get(position).getName());
+        holder.mPartyDescription.setText(mParties.get(position).getDescription());
+        Picasso.get().load(mParties.get(position).getImage()).into(holder.mPartyImage);
     }
 
     @Override
@@ -84,22 +99,20 @@ public class HostAdapter extends RecyclerView.Adapter<HostAdapter.ViewHolder> {
         return mParties.size();
     }
 
-    private void goToHostParty(Party party){
+    private void goToHostParty(PartyInvite party){
         Intent intent = new Intent(mContext, HostPartyActivity.class);
         intent.putExtra("party_object", (Serializable) party);
-        intent.putExtra("user_friends", mUserFriends);
         mContext.startActivity(intent);
 
     }
-    private void goToScannerActivity(Party party){
+    private void goToScannerActivity(PartyInvite party){
         Intent intent = new Intent(mContext, PartyScanActivity.class);
-        intent.putExtra("party_object", (Serializable) party);
+        intent.putExtra("party_id", party.getId());
         mContext.startActivity(intent);
     }
-
-    public void setUserFriends(ArrayList<User> friends){
-        mUserFriends = friends;
+    private void removeParty(PartyInvite party){
+        ((MyDeletePartyListener)mContext).callback(party.getId());
     }
-
 
 }
+

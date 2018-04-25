@@ -13,7 +13,7 @@ public class DjangoUser implements Serializable{
     @SerializedName("id")
     @Expose
     private String id;
-
+    /*
     @SerializedName("username")
     @Expose
     private String username;
@@ -21,7 +21,7 @@ public class DjangoUser implements Serializable{
     @SerializedName("email")
     @Expose
     private String email;
-
+    */
     @SerializedName("full_name")
     @Expose
     private String full_name;
@@ -32,7 +32,7 @@ public class DjangoUser implements Serializable{
     public String getId(){
         return id;
     }
-
+    /*
     public void setUsername(String username){
         this.username = username;
     }
@@ -46,7 +46,7 @@ public class DjangoUser implements Serializable{
     public String getEmail(){
         return email;
     }
-
+    */
     public void setFull_name(String full_name){
         this.full_name = full_name;
     }

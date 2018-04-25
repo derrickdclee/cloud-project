@@ -62,4 +62,22 @@ public interface Service {
 
     @GET("parties/hosted/me")
     Single<List<PartyInvite>> getPartiesHosting(@Header("Authorization") String token);
+
+    @DELETE("/parties/{pid}/")
+    Call<Response<Void>> deleteParty(@Header("Authorization") String token,
+                                     @Path("pid") String pid);
+
+    @GET("/invitations/to-party/{pid}/of-user/me")
+    Single<UserInvitation> getMyInvitation(@Header("Authorization") String token,
+                                                 @Path("pid") String pid);
+
+    @GET("/invitations/to-party/{pid}")
+    Single<List<UserInvitation>> getInvitationsToParty(@Header("Authorization") String token,
+                                                       @Path("pid") String pid);
+
+    @PUT("/parties/{pid}/bouncers/")
+    Call<ResponseBody> addBouncerToParty(@Header("Authorization") String token,
+                                         @Path("pid") String pid,
+                                         @Field("bouncer_facebook_id") String facebook_id);
+
 }

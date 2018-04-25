@@ -1,6 +1,7 @@
 package edu.duke.compsci290.partyappandroid;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
@@ -10,8 +11,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.facebook.login.widget.LoginButton;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
@@ -22,6 +27,20 @@ import java.util.List;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
 import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
+import edu.duke.compsci290.partyappandroid.EventPackage.Service;
+import edu.duke.compsci290.partyappandroid.EventPackage.UserInvitation;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class InviteePartyActivity extends AppCompatActivity {
     private PartyInvite mParty;
@@ -33,11 +52,19 @@ public class InviteePartyActivity extends AppCompatActivity {
     private TextView mPartyEndTime;
     private Button mGoToMaps;
     private Button mNotGoing;
-
+    private LinearLayout mLinearLayout;
+    private TextView mRsvpText;
+    private Button mGoingButton;
+    private UserInvitation mUserInvitation;
+    private Service service;
+    private ImageView mQrImage;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private final String QR_URL_BEGINNING = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_invitee_party);
+        setupretrofit();
         Intent intent = this.getIntent();
         mParty = (PartyInvite) intent.getSerializableExtra("party_object");
         mPartyName = findViewById(R.id.activity_invitee_party_name_text);
@@ -67,13 +94,42 @@ public class InviteePartyActivity extends AppCompatActivity {
             }
         });
 
+
         mNotGoing = findViewById(R.id.activity_invitee_not_going_button);
         mNotGoing.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //setNotGoingToParty();
+                setNotGoingToParty();
             }
         });
+
+        mGoingButton = findViewById(R.id.activity_invitee_is_going_button);
+        mGoingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setGoingToParty();
+            }
+        });
+        mLinearLayout = findViewById(R.id.activity_invitee_parent_linear_layout);
+        mRsvpText = findViewById(R.id.activity_invitee_party_rsvp_text);
+        mQrImage = findViewById(R.id.activity_invitee_party_qr);
+
+        Disposable disposable = getUserInfo()
+                .subscribe(t -> {
+                    mUserInvitation = t;
+                    if (t.getHas_rsvped()){
+                        mLinearLayout.removeView(mRsvpText);
+                        mLinearLayout.removeView(mNotGoing);
+                        mLinearLayout.removeView(mGoingButton);
+                    }
+                    Picasso.get().load(QR_URL_BEGINNING+t.getId()).into(mQrImage);
+                    Log.d("PARTYID", t.getId());
+                });
+        compositeDisposable.add(disposable);
+
+        //Picasso.get().load(QR_URL_BEGINNING+mParty.).into(mQrImage);
+        //Log.d("PARTYID", mParty.getId());
+
 
     }
 
@@ -109,8 +165,77 @@ public class InviteePartyActivity extends AppCompatActivity {
         }
     }
 
-    /*
+    private void setupretrofit(){
+        Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
+        service = new Retrofit.Builder().baseUrl("http://party-app-dev.us-west-2.elasticbeanstalk.com").addCallAdapterFactory(RxJava2CallAdapterFactory.create()).addConverterFactory(GsonConverterFactory.create(gson)).build().create(Service.class);
+    }
+
+    private Single<UserInvitation> getUserInfo(){
+        String accessToken = "";
+        SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
+        if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
+            accessToken = mPrefs.getString("access_token", "");
+        }
+        return service.getMyInvitation("Bearer "+accessToken, mParty.getId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+    }
+
+
     private void setNotGoingToParty(){
-        mParty.
-    }*/
+        String accessToken = "";
+        SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
+        if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
+            accessToken = mPrefs.getString("access_token", "");
+        }
+        service.removeInvitee("Bearer "+accessToken, mUserInvitation.getId())
+                .enqueue(new Callback<Response<Void>>() {
+                    @Override
+                    public void onResponse(Call<Response<Void>> call, Response<Response<Void>> response) {
+                        finish();
+                    }
+
+                    @Override
+                    public void onFailure(Call<Response<Void>> call, Throwable t) {
+
+                    }
+                });
+    }
+
+    private void setGoingToParty(){
+        String accessToken = "";
+        SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
+        if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
+            accessToken = mPrefs.getString("access_token", "");
+        }
+
+
+        service.rsvpUser("Bearer "+accessToken, mUserInvitation.getId())
+                .enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        Log.d("response", response+"");
+                        if (response.code()==200){
+                            mLinearLayout.removeView(mRsvpText);
+                            mLinearLayout.removeView(mNotGoing);
+                            mLinearLayout.removeView(mGoingButton);
+                        }
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+                    }
+                });
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        compositeDisposable.clear();
+    }
 }

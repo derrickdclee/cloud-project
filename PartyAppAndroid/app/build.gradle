@@ -8,7 +8,7 @@ android {
     compileSdkVersion 26
     defaultConfig {
         applicationId "edu.duke.compsci290.partyappandroid"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -58,5 +58,7 @@ dependencies {
     compile 'id.zelory:compressor:2.1.0'
 
     implementation 'com.google.android.gms:play-services-places:15.0.0'
+
+    compile 'com.journeyapps:zxing-android-embedded:3.4.0'
 
 }

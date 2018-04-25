@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="edu.duke.compsci290.partyappandroid">
 
     <uses-sdk android:minSdkVersion="10" />
@@ -69,10 +70,17 @@
 
                 <data android:mimeType="text/plain" />
             </intent-filter>
+
         </activity>
         <activity android:name=".PartyCheckInActivity" />
         <activity android:name=".InviteeActivity" />
         <activity android:name=".InviteePartyActivity"></activity>
+
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="portrait"
+            tools:replace="screenOrientation" />
+
     </application>
 
 </manifest>

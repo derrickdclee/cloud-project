@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.FacebookUser;
+import edu.duke.compsci290.partyappandroid.EventPackage.InviteFilterStatus;
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
+import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
 import edu.duke.compsci290.partyappandroid.EventPackage.Service;
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
 import edu.duke.compsci290.partyappandroid.EventPackage.UserInvitation;
@@ -49,10 +51,13 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
     private ArrayList<UserInvitation> mDisplayedInvitees;
     private Context mContext;
     private Service service;
-    private Party mParty;
-    public HostPartyInvitedListAdapter(Context context, ArrayList<UserInvitation> friends, Party party){
+    private InviteFilterStatus mFilterType;
+    private PartyInvite mParty;
+
+    public HostPartyInvitedListAdapter(Context context, ArrayList<UserInvitation> friends, PartyInvite party, InviteFilterStatus type){
         mDisplayedInvitees = friends;
         mContext = context;
+        mFilterType = type;
         mParty = party;
         setupretrofit();
     }
@@ -63,7 +68,7 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
         public Button mAddButton;
         public Button mRemoveButton;
         public TextView mFriendName;
-
+        public Button mPromoteToBouncer;
         public ViewHolder(View itemView) {
             super(itemView);
             mLinearLayout = itemView.findViewById(R.id.facebook_friend_linear_layout);
@@ -71,7 +76,7 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
             mAddButton = itemView.findViewById(R.id.facebook_add);
             mRemoveButton = itemView.findViewById(R.id.facebook_remove);
             mFriendName = itemView.findViewById(R.id.facebook_name);
-
+            mPromoteToBouncer = itemView.findViewById(R.id.promote_to_bouncer_button);
         }
     }
 
@@ -87,6 +92,12 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
                 removeFriendFromParty(mDisplayedInvitees.get(partyInviteeHolder.getAdapterPosition()));
             }
         });
+        partyInviteeHolder.mPromoteToBouncer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                promoteToBouncer(mDisplayedInvitees.get(partyInviteeHolder.getAdapterPosition()));
+            }
+        });
 
         return partyInviteeHolder;
     }
@@ -97,6 +108,19 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
         holder.mFriendName.setText(mDisplayedInvitees.get(position).getInvitee().getFull_name());
         Picasso.get().load("http://graph.facebook.com/" + mDisplayedInvitees.get(position).getFacebook_id() + "/picture?type=square").into(holder.mFacebookThumbnail);
         holder.mLinearLayout.removeView(holder.mAddButton);
+        switch (mFilterType) {
+            case INVNITED:
+                Log.d("WORKING", "WTF");
+                holder.mPromoteToBouncer.setVisibility(View.GONE);
+                break;
+            case RSVP:
+                holder.mRemoveButton.setVisibility(View.GONE);
+                break;
+            case CHECKEDIN:
+                holder.mRemoveButton.setVisibility(View.GONE);
+                holder.mPromoteToBouncer.setVisibility(View.GONE);
+                break;
+        }
 
     }
 
@@ -118,17 +142,6 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
             accessToken = mPrefs.getString("access_token", "");
         }
 
-        /*
-        Disposable mydisp = service.removeInvitee("Bearer "+accessToken, invitee.getId())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(t -> {
-                    mDisplayedInvitees.remove(indexToRemove);
-                    notifyItemRemoved(indexToRemove);
-                    notifyItemRangeChanged(indexToRemove, mDisplayedInvitees.size());
-                }, e-> {
-                    e.printStackTrace();
-                });*/
         retrofit2.Call<Response<Void>> req = service.removeInvitee("Bearer "+accessToken, invitee.getId());
         req.enqueue(new Callback<Response<Void>>() {
             @Override
@@ -143,6 +156,30 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
 
             }
         });
+    }
+
+    private void promoteToBouncer(UserInvitation invitee){
+        int indexToRemove = mDisplayedInvitees.indexOf(invitee);
+        String accessToken = "";
+        SharedPreferences mPrefs = mContext.getSharedPreferences("app_tokens", MODE_PRIVATE);
+        if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
+            accessToken = mPrefs.getString("access_token", "");
+        }
+        service.addBouncerToParty("Bearer "+accessToken, mParty.getId(), invitee.getFacebook_id())
+                .enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        mDisplayedInvitees.remove(indexToRemove);
+                        notifyItemRemoved(indexToRemove);
+                        notifyItemRangeChanged(indexToRemove, mDisplayedInvitees.size());
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+                    }
+                });
+
     }
 
     private void setupretrofit(){

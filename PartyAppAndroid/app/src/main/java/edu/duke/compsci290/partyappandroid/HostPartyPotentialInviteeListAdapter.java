@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.FacebookUser;
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
+import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
 import edu.duke.compsci290.partyappandroid.EventPackage.Service;
 import edu.duke.compsci290.partyappandroid.EventPackage.UserInvitation;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -39,13 +40,11 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
     private ArrayList<FacebookUser> mDisplayedUsers;
     private Context mContext;
     private Service service;
-    private Party mParty;
-    private ArrayList<UserInvitation> mUserInvitationList;
-    public HostPartyPotentialInviteeListAdapter(Context context, ArrayList<FacebookUser> friends, Party party){
+    private PartyInvite mParty;
+    public HostPartyPotentialInviteeListAdapter(Context context, ArrayList<FacebookUser> friends, PartyInvite party){
         mDisplayedUsers = friends;
         mContext = context;
         mParty = party;
-        mUserInvitationList = new ArrayList<>();
         setupretrofit();
         //getInviteeInfo();
     }
@@ -56,7 +55,7 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
         public Button mAddButton;
         public Button mRemoveButton;
         public TextView mFriendName;
-
+        public Button mAddBouncer;
         public ViewHolder(View itemView) {
             super(itemView);
             mLinearLayout = itemView.findViewById(R.id.facebook_friend_linear_layout);
@@ -64,7 +63,7 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
             mAddButton = itemView.findViewById(R.id.facebook_add);
             mRemoveButton = itemView.findViewById(R.id.facebook_remove);
             mFriendName = itemView.findViewById(R.id.facebook_name);
-
+            mAddBouncer = itemView.findViewById(R.id.promote_to_bouncer_button);
         }
     }
 
@@ -88,6 +87,7 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
         holder.mFriendName.setText(mDisplayedUsers.get(position).getName());
         Picasso.get().load("http://graph.facebook.com/" + mDisplayedUsers.get(position).getId() + "/picture?type=square").into(holder.mFacebookThumbnail);
         holder.mLinearLayout.removeView(holder.mRemoveButton);
+        holder.mAddBouncer.setVisibility(View.GONE);
     }
 
     @Override
@@ -120,7 +120,7 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
                 });*/
 
         Log.d("ATTEMPTING", "TO INVITE FRIEND");
-        retrofit2.Call<okhttp3.ResponseBody> req = service.inviteUser("Bearer "+accessToken, friend.getId(), mParty.getPartyId());
+        retrofit2.Call<okhttp3.ResponseBody> req = service.inviteUser("Bearer "+accessToken, friend.getId(), mParty.getId());
         req.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {

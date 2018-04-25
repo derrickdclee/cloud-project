@@ -34,7 +34,9 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.FacebookUser;
+import edu.duke.compsci290.partyappandroid.EventPackage.InviteFilterStatus;
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
+import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
 import edu.duke.compsci290.partyappandroid.EventPackage.Service;
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
 import edu.duke.compsci290.partyappandroid.EventPackage.UserInvitation;
@@ -58,7 +60,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class HostPartyActivity extends AppCompatActivity {
 
-    private Party mParty;
+    private PartyInvite mParty;
     private ArrayList<User> mUsersFriends;
     private ArrayList<User> mFriendsToInvite;
 
@@ -78,7 +80,7 @@ public class HostPartyActivity extends AppCompatActivity {
         mUsersFriends = new ArrayList<>();
         mFriendsToInvite = new ArrayList<>();
         setupretrofit();
-        mParty = (Party) intent.getSerializableExtra("party_object");
+        mParty = (PartyInvite) intent.getSerializableExtra("party_object");
 
 
         final Button toInviteButton = findViewById(R.id.to_invite_button);
@@ -174,11 +176,17 @@ public class HostPartyActivity extends AppCompatActivity {
                     rv.setAdapter(new HostPartyPotentialInviteeListAdapter(this, (ArrayList<FacebookUser>) friendsToInvite, mParty));
                     break;
                 case R.id.invited_button:
-                    rv.setAdapter(new HostPartyInvitedListAdapter(this, (ArrayList<UserInvitation>) t.uInvitations, mParty));
+                    rv.setAdapter(new HostPartyInvitedListAdapter(this, (ArrayList<UserInvitation>) t.uInvitations, mParty, InviteFilterStatus.INVNITED));
                     break;
                 case R.id.rsvped_button:
+                    List<UserInvitation> rsvped = new ArrayList<>(t.uInvitations);
+                    rsvped.removeIf(user-> !user.getHas_rsvped());
+                    rv.setAdapter(new HostPartyInvitedListAdapter(this, (ArrayList<UserInvitation>)rsvped, mParty, InviteFilterStatus.RSVP));
                     break;
                 case R.id.checked_in_button:
+                    List<UserInvitation> checkedin = new ArrayList<>(t.uInvitations);
+                    checkedin.removeIf(user-> !user.getHas_rsvped());
+                    rv.setAdapter(new HostPartyInvitedListAdapter(this, (ArrayList<UserInvitation>)checkedin, mParty, InviteFilterStatus.CHECKEDIN));
                     break;
             }
 
@@ -208,11 +216,11 @@ public class HostPartyActivity extends AppCompatActivity {
         }
 
         Log.d("facebookid", facebook_id);
-        Log.d("partyid", mParty.getPartyId());
+        Log.d("partyid", mParty.getId());
         Log.d("accesstoken", accessToken);
 
         Gson gson = new Gson();
-        Single<List<UserInvitation>> invitationsObserver = service.getUsersInvited("Bearer "+accessToken, mParty.getPartyId())
+        Single<List<UserInvitation>> invitationsObserver = service.getUsersInvited("Bearer "+accessToken, mParty.getId())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
 
@@ -238,7 +246,7 @@ public class HostPartyActivity extends AppCompatActivity {
 
     }
     public void randomtest(){
-        Log.d("PARTYID", mParty.getPartyId());
+        Log.d("PARTYID", mParty.getId());
         String accessToken = "";
         String facebook_id = "";
         SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
@@ -262,7 +270,7 @@ public class HostPartyActivity extends AppCompatActivity {
                     Log.d("t works", "tworks");
                 });
 
-        Single<List<UserInvitation>> invitationsObserver = service.getUsersInvited("Bearer "+accessToken, mParty.getPartyId())
+        Single<List<UserInvitation>> invitationsObserver = service.getUsersInvited("Bearer "+accessToken, mParty.getId())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
 

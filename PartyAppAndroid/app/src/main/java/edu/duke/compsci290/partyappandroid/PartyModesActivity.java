@@ -16,8 +16,14 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,6 +47,7 @@ public class PartyModesActivity extends AppCompatActivity {
         mHostButton = findViewById(R.id.host_mode_button);
         mBouncerButton = findViewById(R.id.bouncer_mode_button);
         mInviteeButton = findViewById(R.id.invitee_mode_button);
+
         mHostButton.setText("Host Mode");
         mHostButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,11 +110,7 @@ public class PartyModesActivity extends AppCompatActivity {
             return;
         }
         Intent intent = new Intent(this, InviteeActivity.class);
-        if (mUser != null){
-            Log.d("THIS HITS", "thankfully");
-            intent.putExtra("user_object", mUser);
-            this.startActivity(intent);
-        }
+        this.startActivity(intent);
     }
     @Override
     public void onResume() {
@@ -152,6 +155,14 @@ public class PartyModesActivity extends AppCompatActivity {
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
     }
+
+    private void logout(){
+        LoginManager.getInstance().logOut();
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
