@@ -19,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.social_auth.get(provider='facebook').uid
 
 
-class PartySerializer(serializers.ModelSerializer):
+class PartyManagerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Party
         fields = ('id', 'host', 'bouncers', 'requesters', 'name', 'description', 'image', 'lat', 'lng',
@@ -27,8 +27,19 @@ class PartySerializer(serializers.ModelSerializer):
 
     id = serializers.ReadOnlyField()
     host = UserSerializer(read_only=True)
-    bouncers = UserSerializer(many=True, read_only=True)  # read_only required for nested serializer
+    bouncers = UserSerializer(many=True, read_only=True)
     requesters = UserSerializer(many=True, read_only=True)
+
+
+class PartySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Party
+        fields = ('id', 'host', 'invitees', 'name', 'description', 'image', 'lat', 'lng',
+                  'start_time', 'end_time',)
+
+    id = serializers.ReadOnlyField()
+    host = UserSerializer(read_only=True)
+    invitees = UserSerializer(many=True, read_only=True)  # read_only required for nested serializer
     image = serializers.ImageField(use_url=True, required=False)
 
     def validate(self, data):

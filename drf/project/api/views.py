@@ -13,8 +13,8 @@ from django.contrib.auth.models import User
 from social_django.models import UserSocialAuth
 
 from project.api.permissions import *
-from project.api.models import Party, Invitation
-from project.api.serializers import PartySerializer, PartySummarySerializer, UserSerializer, InvitationSerializer
+from project.api.models import *
+from project.api.serializers import *
 
 
 @api_view(['GET'])
@@ -40,7 +40,6 @@ def lookup_facebook_id(user):
 
 class PartyList(generics.ListCreateAPIView):
     queryset = Party.objects.all()
-    serializer_class = PartySerializer
     permission_classes = (permissions.IsAuthenticated,)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
@@ -48,7 +47,7 @@ class PartyList(generics.ListCreateAPIView):
         if self.request.method == 'GET':
             return PartySummarySerializer
         else:
-            return PartySerializer
+            return PartyManagerSerializer
 
     def perform_create(self, serializer):
         serializer.save(host=self.request.user)
@@ -56,22 +55,21 @@ class PartyList(generics.ListCreateAPIView):
 
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Party.objects.all()
-    serializer_class = PartySerializer
     permission_classes = (Or(IsAdmin, And(IsAuth, IsHostOfPartyObjectOrReadOnly)), )
 
     def get_serializer_class(self):
-        # for k, v in self.__dict__.items():
-        #     print("{0}: {1}".format(k, v))
         if self.request.method == 'GET':
             party_id = self.kwargs['pk']
             party = Party.objects.get(pk=party_id)
             user = self.request.user
-            if user.is_staff or user == party.host or user in party.bouncers.all() or user in party.invitees.all():
+            if user.is_staff or user == party.host:
+                return PartyManagerSerializer
+            elif user in party.bouncers.all() or user in party.invitees.all():
                 return PartySerializer
             else:
                 return PartySummarySerializer
         else:
-            return PartySerializer
+            return PartyManagerSerializer
 
 
 class AddBouncer(APIView):
@@ -93,8 +91,9 @@ class AddBouncer(APIView):
         if not invitation.has_rsvped:
             raise ValidationError("This invitee has not RSVPed yet.")
         invitation.delete()
-        party.bouncers.add(bouncer)
-        serializer = PartySerializer(party)
+        party.bouncers.add(bouncer)  # no need to call save
+        serializer = PartyManagerSerializer(party)  # this is serialization, NOT deserialization
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -111,8 +110,7 @@ class RequestToJoinParty(APIView):
             raise ValidationError("You've already been invited.")
 
         party.requesters.add(request.user)
-        serializer = PartySerializer(party)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
 
 
 class RejectRequestToJoinParty(APIView):
@@ -131,7 +129,8 @@ class RejectRequestToJoinParty(APIView):
         if reject not in party.requesters.all():
             raise ValidationError("This user did not request to join the party.")
         party.requesters.remove(reject)
-        serializer = PartySerializer(party)
+        serializer = PartyManagerSerializer(party)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -212,7 +211,6 @@ class GrantRequestToJoinParty(generics.CreateAPIView):
 class InvitationDetail(generics.RetrieveDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    # TODO: add bouncer to permission_classes?
     permission_classes = (Or(IsAdmin, Or(IsHostOfInvitationObject, IsInviteeOfInvitationObject)),)
 
 
@@ -234,8 +232,9 @@ class InvitationRsvp(generics.UpdateAPIView):
             raise ValidationError("You have already RSVPed.")
 
         invitation.has_rsvped = True
-        invitation.save()
+        invitation.save()  # need to explicitly call save here
         serializer = InvitationSerializer(invitation)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -258,8 +257,9 @@ class InvitationCheckin(generics.UpdateAPIView):
             raise ValidationError("The user has already checked in.")
 
         invitation.has_checkedin = True
-        invitation.save()
+        invitation.save()  # need to explicitly call save here
         serializer = InvitationSerializer(invitation)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
