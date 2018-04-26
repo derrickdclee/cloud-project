@@ -121,4 +121,3 @@ class IsHostOrBouncer(permissions.BasePermission):
             return False
         # note that we need .all() on ManyToManyFields
         return party.host == request.user or request.user in party.bouncers.all()
-
