@@ -7,7 +7,7 @@ from django.utils import timezone
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'full_name', 'facebook_id')
+        fields = ('full_name', 'facebook_id')
 
     full_name = serializers.SerializerMethodField(method_name='get_user_full_name')
     facebook_id = serializers.SerializerMethodField(method_name='get_user_facebook_id')
