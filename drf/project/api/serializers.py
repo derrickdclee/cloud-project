@@ -29,6 +29,15 @@ class PartyManagerSerializer(serializers.ModelSerializer):
     host = UserSerializer(read_only=True)
     bouncers = UserSerializer(many=True, read_only=True)
     requesters = UserSerializer(many=True, read_only=True)
+    image = serializers.ImageField(use_url=True, required=False)
+    # invitees is not included, as the host/
+
+    def validate(self, data):
+        if data['start_time'] > data['end_time']:
+            raise serializers.ValidationError("Start time cannot be later than end time.")
+        if data['start_time'] < timezone.now():
+            raise serializers.ValidationError("Start time cannot be in the past.")
+        return data
 
 
 class PartySerializer(serializers.ModelSerializer):
@@ -41,13 +50,6 @@ class PartySerializer(serializers.ModelSerializer):
     host = UserSerializer(read_only=True)
     invitees = UserSerializer(many=True, read_only=True)  # read_only required for nested serializer
     image = serializers.ImageField(use_url=True, required=False)
-
-    def validate(self, data):
-        if data['start_time'] > data['end_time']:
-            raise serializers.ValidationError("Start time cannot be later than end time.")
-        if data['start_time'] < timezone.now():
-            raise serializers.ValidationError("Start time cannot be in the past.")
-        return data
 
 
 class PartySummarySerializer(serializers.ModelSerializer):
