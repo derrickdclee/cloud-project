@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from social_django.models import UserSocialAuth
 from project.api.models import Party, Invitation
 from rest_framework import serializers
 from django.utils import timezone
@@ -16,7 +17,11 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name()
 
     def get_user_facebook_id(self, obj):
-        return obj.social_auth.get(provider='facebook').uid
+        try:
+            fb_account = obj.social_auth.get(provider='facebook')
+        except UserSocialAuth.DoesNotExist:
+            return -1
+        return fb_account.uid
 
 
 class PartyManagerSerializer(serializers.ModelSerializer):
