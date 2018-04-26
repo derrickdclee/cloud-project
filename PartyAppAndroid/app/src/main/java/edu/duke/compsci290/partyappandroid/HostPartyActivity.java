@@ -38,6 +38,7 @@ import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
 import edu.duke.compsci290.partyappandroid.EventPackage.Service;
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
 import edu.duke.compsci290.partyappandroid.EventPackage.UserInvitation;
+import edu.duke.compsci290.partyappandroid.SpotifyActivityPackage.PlaySpotifyActivity;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -66,6 +67,7 @@ public class HostPartyActivity extends AppCompatActivity {
     private RecyclerView rv;
     private Service service;
     private ArrayList<UserInvitation> mUserInvitationList;
+    private Button mGoToSpotifyButton;
 
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -80,6 +82,13 @@ public class HostPartyActivity extends AppCompatActivity {
         setupretrofit();
         mParty = (PartyInvite) intent.getSerializableExtra("party_object");
 
+        mGoToSpotifyButton = findViewById(R.id.host_go_to_spotify_button);
+        mGoToSpotifyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToPartyPlaylist();
+            }
+        });
 
         final Button toInviteButton = findViewById(R.id.to_invite_button);
         final Button invitedButton = findViewById(R.id.invited_button);
@@ -307,6 +316,12 @@ public class HostPartyActivity extends AppCompatActivity {
     protected void onPause(){
         super.onPause();
         compositeDisposable.clear();
+    }
+
+    private void goToPartyPlaylist(){
+        Intent intent = new Intent(this, PlaySpotifyActivity.class);
+        intent.putExtra("party_id", mParty.getId());
+        startActivity(intent);
     }
 
 }

@@ -85,10 +85,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="TextView" />
+                android:text="Song" />
 
             <EditText
-                android:id="@+id/editText"
+                android:id="@+id/host_song_edit_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -109,10 +109,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="TextView" />
+                android:text="Artist (optional)" />
 
             <EditText
-                android:id="@+id/editText2"
+                android:id="@+id/host_artist_edit_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -133,10 +133,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="TextView" />
+                android:text="Album (optional)" />
 
             <EditText
-                android:id="@+id/editText3"
+                android:id="@+id/host_album_edit_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

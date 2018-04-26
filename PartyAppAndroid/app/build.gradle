@@ -16,6 +16,7 @@ android {
 
         buildConfigField "String", 'DjangoClientId', DJANGO_CLIENT_ID
         buildConfigField "String", 'DjangoSecretKey', DJANGO_SECRET_KEY
+        multiDexEnabled true
 
     }
     buildTypes {
@@ -73,4 +74,9 @@ dependencies {
     // This library handles music playback
     compile 'com.spotify.sdk:spotify-player-24-noconnect-2.20b@aar'
 
+    compile 'com.google.firebase:firebase-core:15.0.0'
+    compile 'com.google.firebase:firebase-auth:15.0.0'
+    compile 'com.google.firebase:firebase-firestore:15.0.0'
+
 }
+apply plugin: 'com.google.gms.google-services'

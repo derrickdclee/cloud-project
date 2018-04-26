@@ -3,9 +3,11 @@ package edu.duke.compsci290.partyappandroid;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -23,6 +25,13 @@ import com.facebook.GraphResponse;
 import com.facebook.HttpMethod;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FacebookAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.u.rxfacebook.RxFacebook;
 
 import org.json.JSONException;
@@ -49,18 +58,15 @@ import retrofit2.http.HTTP;
 public class MainActivity extends AppCompatActivity {
     private CallbackManager callbackManager;
     private LoginButton loginButton;
-    private User mUser;
     private RequestQueue queue;
+    private FirebaseAuth mAuth;
 
-    /*
-    To delete
-     */
-    private Disposable myDisposable;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         queue = Volley.newRequestQueue(this);
+        mAuth = FirebaseAuth.getInstance();
 
         callbackManager = CallbackManager.Factory.create();
         loginButton = (LoginButton) findViewById(R.id.login_button);
@@ -76,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("CHECKFORLOGIN", AccessToken.getCurrentAccessToken()+"");
                 if (AccessToken.getCurrentAccessToken()!=null){
                     handleFacebookAccessToken(loginResult.getAccessToken());
+                    firebaseHandleFacebookAccessToken(loginResult.getAccessToken());
                 }
             }
 
@@ -106,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if (AccessToken.getCurrentAccessToken()!=null){
             handleFacebookAccessToken(AccessToken.getCurrentAccessToken());
+            firebaseHandleFacebookAccessToken(AccessToken.getCurrentAccessToken());
         }
     }
 
@@ -113,11 +121,6 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, PartyModesActivity.class);
         this.startActivity(intent);
 
-    }
-    private void bypass(){
-        Intent intent = new Intent(this, PartyModesActivity.class);
-        intent.putExtra("user_object", (Serializable) mUser);
-        this.startActivity(intent);
     }
 
     private void handleFacebookAccessToken(final AccessToken token){
@@ -173,37 +176,35 @@ public class MainActivity extends AppCompatActivity {
         queue.add(postRequest);
 
     }
-    private void temporaryRetrofitTest(){
 
-        Bundle parameters = new Bundle();
-        parameters.putString("fields", "id,name,email");
+    private void firebaseHandleFacebookAccessToken(AccessToken token) {
+        Log.d("FIREBASE", "handleFacebookAccessToken:" + token);
 
+        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d("FIREBASE", "signInWithCredential:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
 
-        GraphRequest request = new GraphRequest();
-        request.setAccessToken(AccessToken.getCurrentAccessToken());
-        request.setGraphPath("/me");
-        request.setParameters(parameters);
-        request.executeAsync();
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w("FIREBASE", "signInWithCredential:failure", task.getException());
 
+                        }
 
-        Observable.defer(()->Observable.just(request.executeAndWait())).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .map(t -> {
-                    //Log.d("T", t.toString());
-                    Log.d("T", t.toString()+" "+"test");
-                    return new User("TEST", "test");
-                })
-                .subscribe(t ->{
-                    Log.d("WILLRETURN", "EYY");
-                }, e -> e.printStackTrace());
-
-
-
+                    }
+                });
     }
+
+
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
     }
 
 }
