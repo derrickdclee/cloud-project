@@ -124,10 +124,10 @@ class RejectRequestToJoinParty(APIView):
         except Party.DoesNotExist:
             raise ValidationError("The party does not exist.")
 
-        reject_id = request.data.get('reject_id')
-        if reject_id is None:
-            raise ValidationError("'reject_id' was not provided.")
-        reject = User.objects.get(pk=reject_id)
+        reject_facebook_id = request.data.get('reject_facebook_id')
+        if reject_facebook_id is None:
+            raise ValidationError("'reject_facebook_id' was not provided.")
+        reject = lookup_user_with_facebook_id(reject_facebook_id)
         if reject not in party.requesters.all():
             raise ValidationError("This user did not request to join the party.")
         party.requesters.remove(reject)
@@ -187,13 +187,10 @@ class GrantRequestToJoinParty(generics.CreateAPIView):
     permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithParam), )
 
     def perform_create(self, serializer):
-        invitee_id = self.request.data.get('invitee_id')
-        if invitee_id is None:
-            raise ValidationError("'invitee_id' was not provided.")
-        try:
-            invitee = User.objects.get(pk=invitee_id)
-        except User.DoesNotExist:
-            raise ValidationError("The user does not exist.")
+        invitee_facebook_id = self.request.data.get('invitee_facebook_id')
+        if invitee_facebook_id is None:
+            raise ValidationError("'invitee_facebook_id' was not provided.")
+        invitee = lookup_user_with_facebook_id(invitee_facebook_id)
 
         party_id = self.request.data.get('party_id')
         party = Party.objects.get(pk=party_id)
@@ -215,7 +212,7 @@ class GrantRequestToJoinParty(generics.CreateAPIView):
 class InvitationDetail(generics.RetrieveDestroyAPIView):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    # TODO: add bouncer to permission_classes
+    # TODO: add bouncer to permission_classes?
     permission_classes = (Or(IsAdmin, Or(IsHostOfInvitationObject, IsInviteeOfInvitationObject)),)
 
 
