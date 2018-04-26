@@ -43,6 +43,10 @@
             android:value="@string/facebook_app_id" />
 
         <activity
+            android:name="com.spotify.sdk.android.authentication.LoginActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+
+        <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name" />
@@ -70,17 +74,15 @@
 
                 <data android:mimeType="text/plain" />
             </intent-filter>
-
         </activity>
         <activity android:name=".PartyCheckInActivity" />
         <activity android:name=".InviteeActivity" />
-        <activity android:name=".InviteePartyActivity"></activity>
-
+        <activity android:name=".InviteePartyActivity" />
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="portrait"
             tools:replace="screenOrientation" />
-
+        <activity android:name=".SpotifyActivityPackage.PlaySpotifyActivity"></activity>
     </application>
 
 </manifest>
