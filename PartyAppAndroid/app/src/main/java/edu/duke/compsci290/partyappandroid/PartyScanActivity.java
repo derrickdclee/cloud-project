@@ -174,14 +174,18 @@ public class PartyScanActivity extends AppCompatActivity {
         Optional<UserInvitation> invitedUserOptional = invitedUserStream.findAny();
         if (invitedUserOptional.isPresent()){
             UserInvitation invitedUser = invitedUserOptional.get();
-            Picasso.get().load("http://graph.facebook.com/" + invitedUser.getFacebook_id() + "/picture?type=large").into(mUserImage);
+            Picasso.get().load("http://graph.facebook.com/" + invitedUser.getInvitee().getFacebook_id() + "/picture?type=large").into(mUserImage);
             mUserNameText.setText(invitedUser.getInvitee().getFull_name());
             mResultText.setText("Checking into database...");
+            Log.d("access token", accessToken);
+            Log.d("id", id);
+
             service.checkinUser("Bearer "+accessToken, id).enqueue(new Callback<ResponseBody>() {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     Log.d("RESPONSE CODE", response.code()+"");
                     Log.d("RESPONSE MESSAGE", response.message());
+                    Log.d("ID PUT IN", id);
                     mResultText.setText("User checked in");
                 }
 

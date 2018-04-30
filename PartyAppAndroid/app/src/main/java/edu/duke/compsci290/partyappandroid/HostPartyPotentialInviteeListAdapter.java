@@ -146,5 +146,21 @@ public class HostPartyPotentialInviteeListAdapter extends RecyclerView.Adapter<H
         service = new Retrofit.Builder().baseUrl("http://party-app-dev.us-west-2.elasticbeanstalk.com").addConverterFactory(GsonConverterFactory.create(gson)).build().create(Service.class);
     }
 
+    public void clear(){
+        if (mDisplayedUsers==null){
+            return;
+        }
+        mDisplayedUsers.clear();
+        notifyDataSetChanged();
+    }
+
+    public void addAll(ArrayList<FacebookUser> uinvs){
+        if (mDisplayedUsers==null){
+            return;
+        }
+        mDisplayedUsers.addAll(uinvs);
+        notifyDataSetChanged();
+    }
+
 
 }

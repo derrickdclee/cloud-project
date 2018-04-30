@@ -62,6 +62,12 @@ public class PartyModesActivity extends AppCompatActivity {
                 goToInviteeMode();
             }
         });
+        mBouncerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToBouncerMode();
+            }
+        });
         mBouncerButton.setText("Bouncer Mode");
         getLocationPermission();
         Log.d("DOES THIS HIT", "UGGHHH");
@@ -100,6 +106,10 @@ public class PartyModesActivity extends AppCompatActivity {
     }
     private void goToHostMode(){
         Intent intent = new Intent(this, HostActivity.class);
+        this.startActivity(intent);
+    }
+    private void goToBouncerMode(){
+        Intent intent = new Intent(this, BouncerActivity.class);
         this.startActivity(intent);
     }
     private void goToInviteeMode(){

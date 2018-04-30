@@ -22,8 +22,12 @@ import com.squareup.picasso.Picasso;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
 import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
@@ -67,24 +71,39 @@ public class InviteePartyActivity extends AppCompatActivity {
         setupretrofit();
         Intent intent = this.getIntent();
         mParty = (PartyInvite) intent.getSerializableExtra("party_object");
+        mUserInvitation = (UserInvitation) intent.getSerializableExtra("user_invitation");
         mPartyName = findViewById(R.id.activity_invitee_party_name_text);
         mPartyName.setText(mParty.getName());
 
         mPartyDescription = findViewById(R.id.activity_invitee_party_description);
-        mPartyDescription.setText(mParty.getDescription());
+        mPartyDescription.setText("Description: "+mParty.getDescription());
 
         mPartyImage = findViewById(R.id.activity_invitee_party_image);
         Picasso.get().load(mParty.getImage()).into(mPartyImage);
 
+        SimpleDateFormat sdfForDjango = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssXXX", Locale.getDefault());
+        SimpleDateFormat betterDateFormat = new SimpleDateFormat("MMM d, h:mm a", Locale.getDefault());
+        String startTime = "Start Time: ";
+        String endTime = "End Time: ";
+        Calendar c = Calendar.getInstance();
+        try {
+            c.setTime(sdfForDjango.parse(mParty.getStart_time()));
+            startTime += betterDateFormat.format(c.getTime());
+            c.setTime(sdfForDjango.parse(mParty.getEnd_time()));
+            endTime += betterDateFormat.format(c.getTime());
+        } catch (ParseException e){
+            Log.d("PARSEECXEPTION", e.toString());
+        }
+
         mPartyStartTime = findViewById(R.id.activity_invitee_party_start_time);
-        mPartyStartTime.setText(mParty.getStart_time());
+        mPartyStartTime.setText(startTime);
 
         mPartyEndTime = findViewById(R.id.activity_invitee_party_end_time);
-        mPartyEndTime.setText(mParty.getEnd_time());
+        mPartyEndTime.setText(endTime);
 
         mPartyLocation = findViewById(R.id.activity_invitee_party_location);
         String addressForMaps = getAddressFromLatLng(Double.parseDouble(mParty.getLat()), Double.parseDouble(mParty.getLng()));
-        mPartyLocation.setText(addressForMaps);
+        mPartyLocation.setText("Location: "+addressForMaps);
 
         mGoToMaps = findViewById(R.id.activity_invitee_party_go_to_maps);
         mGoToMaps.setOnClickListener(new View.OnClickListener() {
@@ -94,6 +113,10 @@ public class InviteePartyActivity extends AppCompatActivity {
             }
         });
 
+
+        mLinearLayout = findViewById(R.id.activity_invitee_parent_linear_layout);
+        mRsvpText = findViewById(R.id.activity_invitee_party_rsvp_text);
+        mQrImage = findViewById(R.id.activity_invitee_party_qr);
 
         mNotGoing = findViewById(R.id.activity_invitee_not_going_button);
         mNotGoing.setOnClickListener(new View.OnClickListener() {
@@ -110,24 +133,13 @@ public class InviteePartyActivity extends AppCompatActivity {
                 setGoingToParty();
             }
         });
-        mLinearLayout = findViewById(R.id.activity_invitee_parent_linear_layout);
-        mRsvpText = findViewById(R.id.activity_invitee_party_rsvp_text);
-        mQrImage = findViewById(R.id.activity_invitee_party_qr);
+        if (mUserInvitation.getHas_rsvped()){
+            mRsvpText.setVisibility(View.INVISIBLE);
+            mGoingButton.setVisibility(View.INVISIBLE);
+            mNotGoing.setVisibility(View.INVISIBLE);
+        }
 
-        Disposable disposable = getUserInfo()
-                .subscribe(t -> {
-                    mUserInvitation = t;
-                    if (t.getHas_rsvped()){
-                        mLinearLayout.removeView(mRsvpText);
-                        mLinearLayout.removeView(mNotGoing);
-                        mLinearLayout.removeView(mGoingButton);
-                    }
-                    Picasso.get().load(QR_URL_BEGINNING+t.getId()).into(mQrImage);
-                    Log.d("PARTYID", t.getId());
-                });
-        compositeDisposable.add(disposable);
-
-        //Picasso.get().load(QR_URL_BEGINNING+mParty.).into(mQrImage);
+        Picasso.get().load(QR_URL_BEGINNING+mUserInvitation.getId()).into(mQrImage);
         //Log.d("PARTYID", mParty.getId());
 
 
@@ -171,7 +183,7 @@ public class InviteePartyActivity extends AppCompatActivity {
                 .create();
         service = new Retrofit.Builder().baseUrl("http://party-app-dev.us-west-2.elasticbeanstalk.com").addCallAdapterFactory(RxJava2CallAdapterFactory.create()).addConverterFactory(GsonConverterFactory.create(gson)).build().create(Service.class);
     }
-
+    /*
     private Single<UserInvitation> getUserInfo(){
         String accessToken = "";
         SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
@@ -182,7 +194,7 @@ public class InviteePartyActivity extends AppCompatActivity {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
 
-    }
+    }*/
 
 
     private void setNotGoingToParty(){
@@ -219,9 +231,9 @@ public class InviteePartyActivity extends AppCompatActivity {
                     public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                         Log.d("response", response+"");
                         if (response.code()==200){
-                            mLinearLayout.removeView(mRsvpText);
-                            mLinearLayout.removeView(mNotGoing);
-                            mLinearLayout.removeView(mGoingButton);
+                            mRsvpText.setVisibility(View.INVISIBLE);
+                            mGoingButton.setVisibility(View.INVISIBLE);
+                            mNotGoing.setVisibility(View.INVISIBLE);
                         }
 
                     }

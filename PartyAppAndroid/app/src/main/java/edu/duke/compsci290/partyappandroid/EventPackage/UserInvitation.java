@@ -3,11 +3,13 @@ package edu.duke.compsci290.partyappandroid.EventPackage;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
 /**
  * Created by kennethkoch on 4/16/18.
  */
 
-public class UserInvitation {
+public class UserInvitation implements Serializable{
     @SerializedName("id")
     @Expose
     private String id;
@@ -17,9 +19,7 @@ public class UserInvitation {
     @SerializedName("party")
     @Expose
     private String party;
-    @SerializedName("facebook_id")
-    @Expose
-    private String facebook_id;
+
     @SerializedName("has_rsvped")
     @Expose
     private boolean has_rsvped;
@@ -44,12 +44,6 @@ public class UserInvitation {
     }
     public String getParty(){
         return party;
-    }
-    public void setFacebook_id(String facebook_id){
-        this.facebook_id = facebook_id;
-    }
-    public String getFacebook_id(){
-        return facebook_id;
     }
     public void setHas_rsvped(boolean has_rsvped){
         this.has_rsvped = has_rsvped;

@@ -27,14 +27,14 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button2"
+                android:id="@+id/host_manage_songs_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Manage Song" />
 
             <Button
-                android:id="@+id/button4"
+                android:id="@+id/host_suggest_songs_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -51,21 +51,21 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button6"
+                android:id="@+id/host_rewind_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_weight="0"
                 android:background="@android:drawable/ic_media_rew" />
 
             <Button
-                android:id="@+id/button7"
+                android:id="@+id/host_play_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_weight="0"
                 android:background="@android:drawable/ic_media_play" />
 
             <Button
-                android:id="@+id/button8"
+                android:id="@+id/host_fast_forward_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_weight="0"
@@ -158,7 +158,16 @@
             android:id="@+id/host_search_song_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@+id/host_search_for_song_button" />
+            android:layout_below="@+id/host_search_for_song_button" >
+
+        </android.support.v7.widget.RecyclerView>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/host_queued_songs_recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/host_song_play_linear_layout"
+            android:visibility="invisible" />
 
     </RelativeLayout>
 

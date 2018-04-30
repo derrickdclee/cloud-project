@@ -106,7 +106,7 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
     public void onBindViewHolder(final ViewHolder holder, int position) {
         //holder.mFriendName.setText(mDisplayedUsers.get(position).getUserName());
         holder.mFriendName.setText(mDisplayedInvitees.get(position).getInvitee().getFull_name());
-        Picasso.get().load("http://graph.facebook.com/" + mDisplayedInvitees.get(position).getFacebook_id() + "/picture?type=square").into(holder.mFacebookThumbnail);
+        Picasso.get().load("http://graph.facebook.com/" + mDisplayedInvitees.get(position).getInvitee().getFacebook_id() + "/picture?type=square").into(holder.mFacebookThumbnail);
         holder.mLinearLayout.removeView(holder.mAddButton);
         switch (mFilterType) {
             case INVNITED:
@@ -165,7 +165,8 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
         if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
             accessToken = mPrefs.getString("access_token", "");
         }
-        service.addBouncerToParty("Bearer "+accessToken, mParty.getId(), invitee.getFacebook_id())
+        Log.d("bouncerid", invitee.getInvitee().getFacebook_id());
+        service.addBouncerToParty("Bearer "+accessToken, mParty.getId(), invitee.getInvitee().getFacebook_id())
                 .enqueue(new Callback<ResponseBody>() {
                     @Override
                     public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -191,6 +192,22 @@ public class HostPartyInvitedListAdapter extends RecyclerView.Adapter<HostPartyI
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build()
                 .create(Service.class);
+    }
+
+    public void clear(){
+        if (mDisplayedInvitees==null){
+            return;
+        }
+        mDisplayedInvitees.clear();
+        notifyDataSetChanged();
+    }
+
+    public void addAll(ArrayList<UserInvitation> uinvs){
+        if (mDisplayedInvitees==null){
+            return;
+        }
+        mDisplayedInvitees.addAll(uinvs);
+        notifyDataSetChanged();
     }
 
 }

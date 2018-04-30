@@ -81,6 +81,7 @@ public class HostActivity extends AppCompatActivity implements MyDeletePartyList
         });
         getUserParties();
         rv = findViewById(R.id.parties_host_recycler_view);
+        Log.d("DEBUG", "WHYS this not getting called");
         rv.setLayoutManager(new LinearLayoutManager(this));
 
 
@@ -130,6 +131,7 @@ public class HostActivity extends AppCompatActivity implements MyDeletePartyList
         if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
             accessToken = mPrefs.getString("access_token", "");
         }
+        Log.d("access token", accessToken);
         Disposable toDispose = service.getPartiesHosting("Bearer "+accessToken)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

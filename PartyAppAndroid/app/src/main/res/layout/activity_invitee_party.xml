@@ -28,7 +28,9 @@
                 android:id="@+id/activity_invitee_party_name_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAlignment="center" />
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
             <ImageView
                 android:id="@+id/activity_invitee_party_image"
@@ -105,17 +107,10 @@
                 android:layout_gravity="center_horizontal"
                 android:text="Go to Google Maps" />
 
-            <TextView
-                android:id="@+id/textView10"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="To check into this party: Hold phone up to back of bouncer's phone, and tap phone screen, OR show bouncer this QR code:"
-                android:textAlignment="center" />
-
             <ImageView
                 android:id="@+id/activity_invitee_party_qr"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
                 android:layout_gravity="center_horizontal"
                 app:srcCompat="@color/cardview_light_background" />
         </LinearLayout>

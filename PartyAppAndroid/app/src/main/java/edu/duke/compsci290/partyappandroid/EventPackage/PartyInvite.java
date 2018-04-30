@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Created by kennethkoch on 4/20/18.
@@ -104,5 +105,23 @@ public class PartyInvite implements Serializable{
         return end_time;
     }
 
+
+    @SerializedName("bouncers")
+    @Expose
+    private List<DjangoUser> bouncers;
+
+    public void setBouncers(List<DjangoUser> bouncers){
+        this.bouncers = bouncers;
+    }
+    public List<DjangoUser> getBouncers(){
+        return bouncers;
+    }
+
+    public void removeBouncer(DjangoUser bouncer){
+        bouncers.remove(bouncer);
+    }
+    public void addBouncer(DjangoUser bouncer){
+        bouncers.add(bouncer);
+    }
 
 }

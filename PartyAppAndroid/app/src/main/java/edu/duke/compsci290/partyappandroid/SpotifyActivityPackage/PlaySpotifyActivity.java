@@ -2,19 +2,40 @@ package edu.duke.compsci290.partyappandroid.SpotifyActivityPackage;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 
+import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
+import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -30,6 +51,7 @@ import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.PlayerEvent;
 import com.spotify.sdk.android.player.Spotify;
 import com.spotify.sdk.android.player.SpotifyPlayer;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,6 +63,7 @@ import java.util.Map;
 
 import edu.duke.compsci290.partyappandroid.R;
 import edu.duke.compsci290.partyappandroid.SpotifyPackage.PlaySongListener;
+import edu.duke.compsci290.partyappandroid.SpotifyPackage.SongVote;
 import edu.duke.compsci290.partyappandroid.SpotifyPackage.SpotifyService;
 import edu.duke.compsci290.partyappandroid.SpotifyPackage.SpotifySong;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -71,19 +94,81 @@ public class PlaySpotifyActivity extends AppCompatActivity implements
     private String mAccessToken;
     private RecyclerView rv;
     private String partyId;
+    private FirestoreRecyclerAdapter mFirestoreAdapter;
+    private Button mControlSongsButton;
+    private Button mSuggestSongsButton;
+    private Button mSelectedButton;
+    private FirebaseFunctions mFunctions;
+    private Button mPlayButton;
+    private Button mRewindButton;
+    private Button mFastForwardButton;
+    private LinearLayout mSongLayout;
+    private LinearLayout mArtistLayout;
+    private LinearLayout mAlbumLayout;
+    private RecyclerView mSongQueueRecyclerView;
+    private boolean isHost;
+    private FirebaseAuth mAuth;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_play_spotify);
+        Intent intent = getIntent();
+        partyId = intent.getStringExtra("party_id");
+        isHost = intent.getBooleanExtra("is_host", false);
+        mAuth = FirebaseAuth.getInstance();
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"user-read-private", "streaming"});
         AuthenticationRequest request = builder.build();
-
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
         mSongTitleEdit = findViewById(R.id.host_song_edit_text);
         mArtistEdit = findViewById(R.id.host_artist_edit_text);
         mAlbumEdit = findViewById(R.id.host_album_edit_text);
+        mControlSongsButton = findViewById(R.id.host_manage_songs_button);
+        mSuggestSongsButton = findViewById(R.id.host_suggest_songs_button);
+        mControlSongsButton.getBackground().setColorFilter(Color.CYAN, PorterDuff.Mode.MULTIPLY);
+        mControlSongsButton.invalidate();
+        mSelectedButton = mControlSongsButton;
+        mFunctions = FirebaseFunctions.getInstance();
+        mPlayButton = findViewById(R.id.host_play_button);
+        mRewindButton = findViewById(R.id.host_rewind_button);
+        mFastForwardButton = findViewById(R.id.host_fast_forward_button);
+        mSongLayout = findViewById(R.id.host_suggest_title_linear_layout);
+        mAlbumLayout = findViewById(R.id.host_suggest_album_linear_layout);
+        mArtistLayout = findViewById(R.id.host_suggest_artist_linear_layout);
+
+        mPlayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pauseAndStart();
+            }
+        });
+        mRewindButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                rewindSong();
+            }
+        });
+        mFastForwardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                fastForwardSong();
+            }
+        });
+
+        mControlSongsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggleMode(mControlSongsButton);
+            }
+        });
+        mSuggestSongsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggleMode(mSuggestSongsButton);
+            }
+        });
         mDb = FirebaseFirestore.getInstance();
         mSearchButton = findViewById(R.id.host_search_for_song_button);
         mSearchButton.setOnClickListener(new View.OnClickListener() {
@@ -92,14 +177,24 @@ public class PlaySpotifyActivity extends AppCompatActivity implements
                 filterSearchSongs();
             }
         });
-        Intent intent = getIntent();
-        partyId = intent.getStringExtra("party_id");
+
+        if (!isHost){
+            mPlayButton.setVisibility(View.GONE);
+            mRewindButton.setVisibility(View.GONE);
+            mFastForwardButton.setVisibility(View.GONE);
+        }
+
         setupRetrofit();
         rv = findViewById(R.id.host_search_song_recyclerview);
+        mSongQueueRecyclerView = findViewById(R.id.host_queued_songs_recyclerview);
         rv.setLayoutManager(new LinearLayoutManager(this));
-        rv.setAdapter(new SpotifySearchAdapter(this, null, partyId, this));
+        mSongQueueRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        rv.setAdapter(new SpotifySearchAdapter(this, null, partyId, this, isHost));
+        mSongQueueRecyclerView.setAdapter(null);
 
     }
+
+
     private void setupRetrofit(){
         Gson gson = new GsonBuilder()
                 .setLenient()
@@ -108,6 +203,36 @@ public class PlaySpotifyActivity extends AppCompatActivity implements
         mSpotifyService = new Retrofit.Builder().baseUrl("https://api.spotify.com")
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build().create(SpotifyService.class);
+    }
+
+    private void toggleMode(Button button){
+        if (!button.equals(mSelectedButton)){
+            button.getBackground().setColorFilter(Color.CYAN, PorterDuff.Mode.MULTIPLY);
+            button.invalidate();
+            mSelectedButton.getBackground().clearColorFilter();
+            mSelectedButton = button;
+
+            switch (button.getId()){
+                case R.id.host_manage_songs_button:
+                    mSongLayout.setVisibility(View.VISIBLE);
+                    mArtistLayout.setVisibility(View.VISIBLE);
+                    mAlbumLayout.setVisibility(View.VISIBLE);
+                    mSearchButton.setVisibility(View.VISIBLE);
+                    mFirestoreAdapter.stopListening();
+                    rv.setVisibility(View.VISIBLE);
+                    mSongQueueRecyclerView.setVisibility(View.INVISIBLE);
+                    break;
+                case R.id.host_suggest_songs_button:
+                    mSongLayout.setVisibility(View.INVISIBLE);
+                    mArtistLayout.setVisibility(View.INVISIBLE);
+                    mAlbumLayout.setVisibility(View.INVISIBLE);
+                    mSearchButton.setVisibility(View.INVISIBLE);
+                    rv.setVisibility(View.INVISIBLE);
+                    mSongQueueRecyclerView.setVisibility(View.VISIBLE);
+                    setUpFirebaseAdapter();
+                    break;
+            }
+        }
     }
 
     private void filterSearchSongs(){
@@ -202,26 +327,33 @@ public class PlaySpotifyActivity extends AppCompatActivity implements
                 Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
                 Log.d("ACCESSTOKEN", response.getAccessToken());
                 mAccessToken = response.getAccessToken();
-                Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
-                    @Override
-                    public void onInitialized(SpotifyPlayer spotifyPlayer) {
-                        mPlayer = spotifyPlayer;
-                        mPlayer.addConnectionStateCallback(PlaySpotifyActivity.this);
-                        mPlayer.addNotificationCallback(PlaySpotifyActivity.this);
-                    }
+                if (isHost){
+                    Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
+                        @Override
+                        public void onInitialized(SpotifyPlayer spotifyPlayer) {
+                            mPlayer = spotifyPlayer;
+                            mPlayer.addConnectionStateCallback(PlaySpotifyActivity.this);
+                            mPlayer.addNotificationCallback(PlaySpotifyActivity.this);
+                        }
 
-                    @Override
-                    public void onError(Throwable throwable) {
-                        Log.e("MainActivity", "Could not initialize player: " + throwable.getMessage());
-                    }
-                });
+                        @Override
+                        public void onError(Throwable throwable) {
+                            Log.e("MainActivity", "Could not initialize player: " + throwable.getMessage());
+                        }
+                    });
+                }
             }
         }
     }
 
     @Override
     protected void onDestroy() {
-        Spotify.destroyPlayer(this);
+        if (mFirestoreAdapter!=null){
+            mFirestoreAdapter.stopListening();
+        }
+        if (isHost){
+            Spotify.destroyPlayer(this);
+        }
         compositeDisposable.clear();
         super.onDestroy();
     }
@@ -257,7 +389,10 @@ public class PlaySpotifyActivity extends AppCompatActivity implements
         Log.d("MainActivity", "Playback event received: " + playerEvent.name());
         switch (playerEvent) {
             // Handle event type as necessary
-            default:
+            case kSpPlaybackNotifyTrackChanged:
+                if (!mPlayer.getPlaybackState().isPlaying){
+                    getTrackFromFirebase();
+                }
                 break;
         }
     }
@@ -272,12 +407,174 @@ public class PlaySpotifyActivity extends AppCompatActivity implements
         }
     }
 
+
+    private void getTrackFromFirebase(){
+        mDb.collection("queued_songs").whereEqualTo("party_id", partyId)
+                .orderBy("num_votes", Query.Direction.DESCENDING).limit(1).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+                    QuerySnapshot snapshot = task.getResult();
+                    if (snapshot.isEmpty()){
+                        return;
+                    }
+                    else {
+                        DocumentSnapshot doc = snapshot.getDocuments().get(0);
+                        mPlayer.playUri(null, doc.get("spotify_url").toString(), 0, 0);
+                        removeSongFromTopOfQueue(doc.get("spotify_url").toString());
+                    }
+                }
+                else {
+                    Log.d("database issue", "issue");
+                }
+            }
+        });
+
+    }
+
+    private void removeSongFromTopOfQueue(String songurl){
+        mDb.collection("queued_songs")
+                .whereEqualTo("party_id", partyId)
+                .whereEqualTo("spotify_url", songurl)
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        for (DocumentSnapshot doc : queryDocumentSnapshots){
+                            mDb.collection("queued_songs").document(doc.getId())
+                                    .delete()
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Log.d("Deleted", "successfully deleted");
+                                        }
+                                    });
+                        }
+                    }
+                });
+        /*
+        mDb.collection("queued_songs").document(songurl)
+                .delete()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d("DELETED", "successfully deleted");
+                    }
+                });*/
+    }
+
+    private void pauseAndStart(){
+        if (mPlayer.getPlaybackState().isPlaying){
+            mPlayer.pause(null);
+            //mPlayButton.setBackground(ContextCompat.getDrawable(this, R.drawable.));
+        }
+        else{
+            if (mPlayer.getMetadata().currentTrack == null){
+                getTrackFromFirebase();
+            }
+            else {
+                Log.d("TRACK", mPlayer.getMetadata().currentTrack.toString());
+                mPlayer.resume(null);
+            }
+        }
+    }
+    private void rewindSong(){
+        mPlayer.skipToPrevious(null);
+    }
+    private void fastForwardSong(){
+        mPlayer.skipToNext(null);
+    }
+
     @Override
     public void playSong(String songId) {
         mPlayer.playUri(null, songId, 0, 0);
     }
 
     private void setNewSongAdapter(ArrayList<SpotifySong> songs){
-        rv.setAdapter(new SpotifySearchAdapter(this, songs, partyId, this));
+        rv.setAdapter(new SpotifySearchAdapter(this, songs, partyId, this, isHost));
     }
+
+
+
+
+
+    private void setUpFirebaseAdapter(){
+        Query mQuery = FirebaseFirestore.getInstance().collection("queued_songs").whereEqualTo("party_id", partyId)
+                .orderBy("num_votes", Query.Direction.DESCENDING);
+
+        FirestoreRecyclerOptions<SongVote> options =
+                new FirestoreRecyclerOptions.Builder<SongVote>()
+                        .setQuery(mQuery, SongVote.class)
+                        .build();
+        mFirestoreAdapter = new FirestoreRecyclerAdapter<SongVote, SongVoteViewHolder>(options) {
+            @Override
+            protected void onBindViewHolder(SongVoteViewHolder holder, int position, final SongVote model) {
+                holder.mScoreView.setText(model.getNum_votes()+"");
+                holder.mSongTitle.setText(model.getSong_title());
+                holder.mArtistName.setText(model.getArtist_name());
+                holder.mAlbumTitle.setText(model.getAlbum_title());
+                Picasso.get().load(model.getAlbum_image()).into(holder.mAlbumImage);
+                if (model.getUpvoter_ids().contains(mAuth.getCurrentUser().getUid())){
+                    holder.mUpvote.getBackground().setColorFilter(Color.CYAN, PorterDuff.Mode.MULTIPLY);
+                    holder.mUpvote.invalidate();
+                    holder.mDownvote.getBackground().clearColorFilter();
+                }
+                Log.d("Downvoters", model.getDownvoter_ids().toString());
+                if (model.getDownvoter_ids().contains(mAuth.getCurrentUser().getUid())){
+                    holder.mDownvote.getBackground().setColorFilter(Color.MAGENTA, PorterDuff.Mode.MULTIPLY);
+                    holder.mDownvote.invalidate();
+                    holder.mUpvote.getBackground().clearColorFilter();
+                }
+                holder.mUpvote.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        voteOnSong(model.getSpotify_url(), true);
+                    }
+                });
+                holder.mDownvote.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        voteOnSong(model.getSpotify_url(), false);
+                    }
+                });
+            }
+
+            @Override
+            public SongVoteViewHolder onCreateViewHolder(ViewGroup group, int i) {
+                View view = LayoutInflater.from(group.getContext())
+                        .inflate(R.layout.song_voting_holder, group, false);
+                return new SongVoteViewHolder(view);
+            }
+        };
+
+        mSongQueueRecyclerView.setAdapter(mFirestoreAdapter);
+        mFirestoreAdapter.startListening();
+    }
+
+
+    private Task<String> voteOnSong(String spotifyurl, boolean is_upvote) {
+        // Create the arguments to the callable function, which is just one string
+        Map<String, Object> songRequest = new HashMap<>();
+        songRequest.put("party_id", partyId);
+        songRequest.put("is_upvote", is_upvote);
+        songRequest.put("spotify_url", spotifyurl);
+
+        return mFunctions
+                .getHttpsCallable("voteOnSong")
+                .call(songRequest)
+                .continueWith(new Continuation<HttpsCallableResult, String>() {
+                    @Override
+                    public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                        // This continuation runs on either success or failure, but if the task
+                        // has failed then getResult() will throw an Exception which will be
+                        // propagated down.
+
+                        String result = (String) task.getResult().getData();
+                        Log.d("RESULT", result+ " ");
+                        return result;
+                    }
+                });
+    }
+
+
 }
