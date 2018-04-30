@@ -69,19 +69,6 @@ class IsHostOfPartyObjectOrReadOnly(permissions.BasePermission):
             return test.has_object_permission(request, view, obj)
 
 
-class IsHostOfPartyWithURLParam(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it.
-    """
-
-    def has_permission(self, request, view):
-        try:
-            party = Party.objects.get(pk=view.kwargs['pk'])
-        except Party.DoesNotExist:
-            return False
-        return party.host == request.user
-
-
 class IsHostOfPartyWithParam(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.

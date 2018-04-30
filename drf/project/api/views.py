@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from rest_framework import generics, permissions, status
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
@@ -27,6 +26,7 @@ def api_root(request, format=None):
         'invitations': reverse('invitation-list', request=request, format=format),
     })
 
+
 def lookup_user_with_facebook_id(facebook_id):
     try:
         user_fb = UserSocialAuth.objects.get(uid=facebook_id)
@@ -34,8 +34,10 @@ def lookup_user_with_facebook_id(facebook_id):
         raise ValidationError("The user does not exist.")
     return user_fb.user
 
+
 def lookup_facebook_id(user):
     return user.social_auth.get(provider='facebook').uid
+
 
 def convert_mile_to_kilometer(mile):
     return mile * 1.609344
@@ -112,14 +114,18 @@ class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
             return PartyManagerSerializer
 
 
-class AddBouncer(APIView):
-    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithURLParam),)
+class AddBouncer(generics.UpdateAPIView):
+    queryset = Party.objects.all()
+    serializer_class = PartyManagerSerializer
+    permission_classes = (Or(IsAdmin, IsHostOfPartyObject),)
 
     def put(self, request, *args, **kwargs):
         try:
             party = Party.objects.get(pk=kwargs['pk'])
         except Party.DoesNotExist:
             raise ValidationError("The party does not exist.")
+
+        self.check_object_permissions(request, party)
 
         bouncer_facebook_id = request.data.get('bouncer_facebook_id')
         if bouncer_facebook_id is None:
@@ -137,7 +143,9 @@ class AddBouncer(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class RequestToJoinParty(APIView):
+class RequestToJoinParty(generics.UpdateAPIView):
+    queryset = Party.objects.all()
+    serializer_class = PartyManagerSerializer
     permission_classes = (permissions.IsAuthenticated, )
 
     def put(self, request, *args, **kwargs):
@@ -148,19 +156,23 @@ class RequestToJoinParty(APIView):
 
         if request.user in party.invitees.all():
             raise ValidationError("You've already been invited.")
-
         party.requesters.add(request.user)
+
         return Response(status=status.HTTP_200_OK)
 
 
-class RejectRequestToJoinParty(APIView):
-    permission_classes = (Or(permissions.IsAdminUser, IsHostOfPartyWithURLParam),)
+class RejectRequestToJoinParty(generics.UpdateAPIView):
+    queryset = Party.objects.all()
+    serializer_class = PartyManagerSerializer
+    permission_classes = (Or(IsAdmin, IsHostOfPartyObject),)
 
     def put(self, request, *args, **kwargs):
         try:
             party = Party.objects.get(pk=kwargs['pk'])
         except Party.DoesNotExist:
             raise ValidationError("The party does not exist.")
+
+        self.check_object_permissions(request, party)
 
         reject_facebook_id = request.data.get('reject_facebook_id')
         if reject_facebook_id is None:
@@ -201,6 +213,7 @@ class InvitationList(generics.ListCreateAPIView):
 
     # this is a hook, called when creating an instance
     # we need to override this method as we are writing to a ReadOnlyField
+    # this is easier than overriding the entire post method
     def perform_create(self, serializer):
         invitee_facebook_id = self.request.data.get('invitee_facebook_id')
         if invitee_facebook_id is None:
