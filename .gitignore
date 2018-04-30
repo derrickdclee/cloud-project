@@ -9,3 +9,4 @@ PartyAppAndroid/local.properties
 PartyAppAndroid/build
 /captures
 .externalNativeBuild
+/Firebase/node_modules/
