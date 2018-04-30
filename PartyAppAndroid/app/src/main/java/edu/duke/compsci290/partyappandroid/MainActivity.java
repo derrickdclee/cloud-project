@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (AccessToken.getCurrentAccessToken()!=null){
+
             handleFacebookAccessToken(AccessToken.getCurrentAccessToken());
             firebaseHandleFacebookAccessToken(AccessToken.getCurrentAccessToken());
         }

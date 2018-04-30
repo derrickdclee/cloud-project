@@ -38,7 +38,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -178,10 +180,15 @@ public class InviteePartyActivity extends AppCompatActivity {
     }
 
     private void setupretrofit(){
+        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        clientBuilder.addInterceptor(loggingInterceptor);
+
         Gson gson = new GsonBuilder()
                 .setLenient()
                 .create();
-        service = new Retrofit.Builder().baseUrl("http://party-app-dev.us-west-2.elasticbeanstalk.com").addCallAdapterFactory(RxJava2CallAdapterFactory.create()).addConverterFactory(GsonConverterFactory.create(gson)).build().create(Service.class);
+        service = new Retrofit.Builder().baseUrl("http://party-app-dev.us-west-2.elasticbeanstalk.com").client(clientBuilder.build()).addCallAdapterFactory(RxJava2CallAdapterFactory.create()).addConverterFactory(GsonConverterFactory.create(gson)).build().create(Service.class);
     }
     /*
     private Single<UserInvitation> getUserInfo(){
@@ -218,11 +225,14 @@ public class InviteePartyActivity extends AppCompatActivity {
     }
 
     private void setGoingToParty(){
+        Log.d("DOES THIS HIT", "maybe");
         String accessToken = "";
         SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
         if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
             accessToken = mPrefs.getString("access_token", "");
         }
+        Log.d("access token", accessToken);
+
 
 
         service.rsvpUser("Bearer "+accessToken, mUserInvitation.getId())
