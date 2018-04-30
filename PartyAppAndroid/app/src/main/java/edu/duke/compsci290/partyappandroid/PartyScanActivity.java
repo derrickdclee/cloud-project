@@ -183,10 +183,12 @@ public class PartyScanActivity extends AppCompatActivity {
             service.checkinUser("Bearer "+accessToken, id).enqueue(new Callback<ResponseBody>() {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    Log.d("RESPONSE CODE", response.code()+"");
-                    Log.d("RESPONSE MESSAGE", response.message());
-                    Log.d("ID PUT IN", id);
-                    mResultText.setText("User checked in");
+                    if (response.code()==200){
+                        mResultText.setText("USER CHECKED IN");
+                    }
+                    else {
+                        mResultText.setText("ERROR CHECKING IN"); 
+                    }
                 }
 
                 @Override

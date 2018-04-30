@@ -40,5 +40,12 @@
             android:layout_below="@+id/bouncer_mode_button"
             android:layout_centerHorizontal="true"
             android:text="Button" />
+
+        <Button
+            android:id="@+id/search_parties_mode_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/invitee_mode_button"
+            android:text="Button" />
     </RelativeLayout>
 </android.support.constraint.ConstraintLayout>

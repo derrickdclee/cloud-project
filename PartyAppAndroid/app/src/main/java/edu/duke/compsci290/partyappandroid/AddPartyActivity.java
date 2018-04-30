@@ -120,7 +120,8 @@ public class AddPartyActivity extends AppCompatActivity {
     private RequestQueue queue;
     private final int IMAGE_REQUEST = 5;
     private Uri mImageUri;
-    private static final SimpleDateFormat sdfForDjango = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssXXX", Locale.getDefault());
+    private static final SimpleDateFormat sdfForDjango = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault());
+    private static final SimpleDateFormat readableFormat = new SimpleDateFormat("MMM d, h:mm a", Locale.getDefault());
     private static final int PICK_IMAGE = 100;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 7;
     private Service service;
@@ -155,8 +156,8 @@ public class AddPartyActivity extends AppCompatActivity {
         myCal.set(Calendar.SECOND, 0);
         mHiddenStartDate.setText(sdfForDjango.format(myCal.getTime()));
         mHiddenEndDate.setText(sdfForDjango.format(myCal.getTime()));
-        mStartDateText.setText(myCal.getTime().toString());
-        mEndDateText.setText(myCal.getTime().toString());
+        mStartDateText.setText(readableFormat.format(myCal.getTime()));
+        mEndDateText.setText(readableFormat.format(myCal.getTime()));
         mStartTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -299,7 +300,7 @@ public class AddPartyActivity extends AppCompatActivity {
                 cal.set(Calendar.YEAR, year);
                 cal.set(Calendar.MONTH, month);
                 cal.set(Calendar.DAY_OF_MONTH, day);
-                startTextView.setText(cal.getTime().toString());
+                startTextView.setText(readableFormat.format(cal.getTime()));
                 startTextHiddenView.setText(sdfForDjango.format(cal.getTime()));
 
             } catch (ParseException e) {
@@ -341,7 +342,7 @@ public class AddPartyActivity extends AppCompatActivity {
                 cal.set(Calendar.YEAR, year);
                 cal.set(Calendar.MONTH, month);
                 cal.set(Calendar.DAY_OF_MONTH, day);
-                endTextView.setText(cal.getTime().toString());
+                endTextView.setText(readableFormat.format(cal.getTime()));
                 endTextHiddenView.setText(sdfForDjango.format(cal.getTime()));
 
             } catch (ParseException e) {
@@ -369,6 +370,9 @@ public class AddPartyActivity extends AppCompatActivity {
             }
             int hour = c.get(Calendar.HOUR_OF_DAY);
             int minute = c.get(Calendar.MINUTE);
+
+            Log.d("Hour", hour+"");
+
             // Create a new instance of TimePickerDialog and return it
             return new TimePickerDialog(getActivity(), this, hour, minute,
                     DateFormat.is24HourFormat(getActivity()));
@@ -388,7 +392,8 @@ public class AddPartyActivity extends AppCompatActivity {
                 cal.setTime(sdfForDjango.parse(startTextHidden));
                 cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
                 cal.set(Calendar.MINUTE, minute);
-                startTextView.setText(cal.getTime().toString());
+                startTextView.setText(readableFormat.format(cal.getTime()));
+                Log.d("DJANGO TIME", sdfForDjango.format(cal.getTime()));
                 startTextHiddenView.setText(sdfForDjango.format(cal.getTime()));
 
             } catch (ParseException e) {
@@ -434,7 +439,7 @@ public class AddPartyActivity extends AppCompatActivity {
                 cal.setTime(sdfForDjango.parse(endTextHidden));
                 cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
                 cal.set(Calendar.MINUTE, minute);
-                endTextView.setText(cal.getTime().toString());
+                endTextView.setText(readableFormat.format(cal.getTime()));
                 endTextHiddenView.setText(sdfForDjango.format(cal.getTime()));
 
             } catch (ParseException e) {

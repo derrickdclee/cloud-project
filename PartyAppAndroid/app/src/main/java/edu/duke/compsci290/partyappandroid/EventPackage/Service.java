@@ -17,6 +17,7 @@ import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Part;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 /**
  * Created by kennethkoch on 4/15/18.
@@ -87,6 +88,11 @@ public interface Service {
 
     @GET("/parties/bouncing/me/")
     Single<List<PartyInvite>> getPartiesBouncing(@Header("Authorization") String token);
+
+    @GET("/parties/")
+    Single<List<PartyInvite>> getNearbyParties(@Header("Authorization") String token,
+                                               @Query("lat") String lat,
+                                               @Query("lng") String lng);
 
 
 
