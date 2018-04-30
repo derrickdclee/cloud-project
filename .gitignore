@@ -10,3 +10,4 @@ PartyAppAndroid/build
 /captures
 .externalNativeBuild
 /Firebase/node_modules/
+/Firebase/functions/node_modules/
