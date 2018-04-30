@@ -70,8 +70,7 @@ class PartyList(generics.ListCreateAPIView):
             d = self.request.query_params.get('d')
             if d is None:
                 d = 10.0
-            d = float(d)
-            d = convert_mile_to_kilometer(d)
+            d = convert_mile_to_kilometer(float(d))
 
             origin = Point(lat, lng)
             north = distance.VincentyDistance(kilometers=d).destination(origin, 0)
@@ -84,18 +83,15 @@ class PartyList(generics.ListCreateAPIView):
             south_lat = south.latitude
             west_lng = west.longitude
 
+            q = Party.objects\
+                .filter(lat__gte=south_lat, lat__lte=north_lat)\
+                .exclude(host__id=user).exclude(bouncers__id=user).exclude(invitees__id=user)
             # edge case around the anti-meridian
             if west_lng > east_lng:
-                print("west_lng: {0}, east_lng: {1}".format(west_lng, east_lng))
                 # it seems like you can't chain Q-object queries with regular queries
-                q = Party.objects \
-                    .filter(Q(lng__gte=west_lng) | Q(lng__lte=east_lng))
-                return q.filter(lat__gte=south_lat, lat__lte=north_lat)\
-                    .exclude(host__id=user).exclude(bouncers__id=user).exclude(invitees__id=user)
+                return q.filter(Q(lng__gte=west_lng) | Q(lng__lte=east_lng))
             else:
-                return Party.objects\
-                    .filter(lat__gte=south_lat, lat__lte=north_lat, lng__gte=west_lng, lng__lte=east_lng)\
-                    .exclude(host__id=user).exclude(bouncers__id=user).exclude(invitees__id=user)
+                return q.filter(lng__gte=west_lng, lng__lte=east_lng)
 
 
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
