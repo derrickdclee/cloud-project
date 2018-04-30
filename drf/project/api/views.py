@@ -61,6 +61,7 @@ class PartyList(generics.ListCreateAPIView):
         if not self.request.query_params:
             return Party.objects.all()
         else:
+            user = self.request.user.id
             lat = self.request.query_params.get('lat')
             lng = self.request.query_params.get('lng')
             if lat is None or lng is None:
@@ -89,10 +90,12 @@ class PartyList(generics.ListCreateAPIView):
                 # it seems like you can't chain Q-object queries with regular queries
                 q = Party.objects \
                     .filter(Q(lng__gte=west_lng) | Q(lng__lte=east_lng))
-                return q.filter(lat__gte=south_lat, lat__lte=north_lat)
+                return q.filter(lat__gte=south_lat, lat__lte=north_lat)\
+                    .exclude(host__id=user).exclude(bouncers__id=user).exclude(invitees__id=user)
             else:
                 return Party.objects\
-                    .filter(lat__gte=south_lat, lat__lte=north_lat, lng__gte=west_lng, lng__lte=east_lng)
+                    .filter(lat__gte=south_lat, lat__lte=north_lat, lng__gte=west_lng, lng__lte=east_lng)\
+                    .exclude(host__id=user).exclude(bouncers__id=user).exclude(invitees__id=user)
 
 
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
