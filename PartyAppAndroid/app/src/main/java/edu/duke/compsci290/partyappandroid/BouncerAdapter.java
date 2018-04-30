@@ -69,14 +69,6 @@ public class BouncerAdapter extends RecyclerView.Adapter<BouncerAdapter.ViewHold
         LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View row = mInflater.inflate(R.layout.bouncer_party_holder, parent, false);
         final ViewHolder partyHolder = new ViewHolder(row);
-        row.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(mContext, InviteePartyActivity.class);
-                intent.putExtra("party_object", mPartyInvites.get(partyHolder.getAdapterPosition()));
-                mContext.startActivity(intent);
-            }
-        });
         return partyHolder;
     }
 

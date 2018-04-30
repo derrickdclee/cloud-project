@@ -82,7 +82,8 @@
             android:screenOrientation="portrait"
             tools:replace="screenOrientation" />
         <activity android:name=".SpotifyActivityPackage.PlaySpotifyActivity" />
-        <activity android:name=".BouncerActivity"></activity>
+        <activity android:name=".BouncerActivity" />
+        <activity android:name=".SearchActivity"></activity>
     </application>
 
 </manifest>

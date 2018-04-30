@@ -37,6 +37,7 @@ public class PartyModesActivity extends AppCompatActivity {
     private User mUser;
     private boolean mLocationPermissionGranted;
     private final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 11;
+    private Button mSearchButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +48,7 @@ public class PartyModesActivity extends AppCompatActivity {
         mHostButton = findViewById(R.id.host_mode_button);
         mBouncerButton = findViewById(R.id.bouncer_mode_button);
         mInviteeButton = findViewById(R.id.invitee_mode_button);
-
+        mSearchButton = findViewById(R.id.search_parties_mode_button);
         mHostButton.setText("Host Mode");
         mHostButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,6 +70,13 @@ public class PartyModesActivity extends AppCompatActivity {
             }
         });
         mBouncerButton.setText("Bouncer Mode");
+        mSearchButton.setText("Find Nearby Parties");
+        mSearchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToSearchMode();
+            }
+        });
         getLocationPermission();
         Log.d("DOES THIS HIT", "UGGHHH");
 
@@ -122,6 +130,17 @@ public class PartyModesActivity extends AppCompatActivity {
         Intent intent = new Intent(this, InviteeActivity.class);
         this.startActivity(intent);
     }
+
+    private void goToSearchMode(){
+        if (!mLocationPermissionGranted){
+            Log.d("THIS IS THE ISSUE", "oh");
+            getLocationPermission();
+            return;
+        }
+        Intent intent = new Intent(this, SearchActivity.class);
+        this.startActivity(intent);
+    }
+
     @Override
     public void onResume() {
         super.onResume();

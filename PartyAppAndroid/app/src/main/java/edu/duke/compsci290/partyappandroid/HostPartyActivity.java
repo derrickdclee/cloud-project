@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.location.Address;
+import android.location.Geocoder;
+import android.net.Uri;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,6 +16,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
@@ -28,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.reactivestreams.Subscriber;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -81,6 +86,10 @@ public class HostPartyActivity extends AppCompatActivity {
     private HostPartyPotentialInviteeListAdapter mInviteeAdapter;
     private HostPartyInvitedListAdapter mInvitedAdapter;
     private HostPartyBouncerAdapter mBouncerAdapter;
+
+    private TextView partyNameText;
+    private Button mGoToMapsButton;
+    private Button mGoToScanButton;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Override
@@ -91,8 +100,13 @@ public class HostPartyActivity extends AppCompatActivity {
         mFriendsToInvite = new ArrayList<>();
         mUserInvitations = new ArrayList<>();
 
+        partyNameText = findViewById(R.id.host_party_activity_party_title);
+        mGoToMapsButton = findViewById(R.id.host_go_to_google_maps_button);
+        mGoToScanButton = findViewById(R.id.host_go_to_scanner_button);
+
         setupretrofit();
         mParty = (PartyInvite) intent.getSerializableExtra("party_object");
+        partyNameText.setText(mParty.getName());
 
         SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
         if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
@@ -107,6 +121,19 @@ public class HostPartyActivity extends AppCompatActivity {
                 goToPartyPlaylist();
             }
         });
+        mGoToMapsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToMaps(mParty.getLat(), mParty.getLng());
+            }
+        });
+        mGoToScanButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToScan(mParty);
+            }
+        });
+
 
         final Button toInviteButton = findViewById(R.id.to_invite_button);
         final Button invitedButton = findViewById(R.id.invited_button);
@@ -221,7 +248,7 @@ public class HostPartyActivity extends AppCompatActivity {
                     break;
                 case R.id.checked_in_button:
                     List<UserInvitation> checkedin = new ArrayList<>(t.uInvitations);
-                    checkedin.removeIf(user-> !user.getHas_rsvped());
+                    checkedin.removeIf(user-> !user.getHas_checkedin());
                     mInvitedAdapter.clear();
                     mInvitedAdapter.addAll((ArrayList<UserInvitation>) checkedin);
                     rv.setAdapter(new HostPartyInvitedListAdapter(this, (ArrayList<UserInvitation>)checkedin, mParty, InviteFilterStatus.CHECKEDIN));
@@ -406,5 +433,38 @@ public class HostPartyActivity extends AppCompatActivity {
         intent.putExtra("is_host", true);
         startActivity(intent);
     }
+
+    private void goToMaps(String lat, String lng){
+        Geocoder myg = new Geocoder(this);
+        String addr = "";
+        try {
+            List<Address> myaddr = myg.getFromLocation(Double.parseDouble(lat),
+                    Double.parseDouble(lng), 1);
+            for (int i=0;i<=myaddr.get(0).getMaxAddressLineIndex();i++){
+                addr += myaddr.get(0).getAddressLine(i);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (!addr.equals("")){
+            String newaddress = addr.replace(" ", "+");
+            Uri gmmIntentUri = Uri.parse("google.navigation:q="+newaddress);
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+            startActivity(mapIntent);
+        }
+        else {
+            Uri gmmIntentUri = Uri.parse("google.navigation:q="+ lat +","+ lng);
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+            startActivity(mapIntent);
+        }
+    }
+    private void goToScan(PartyInvite party){
+        Intent intent = new Intent(this, PartyScanActivity.class);
+        intent.putExtra("party_id", party.getId());
+        startActivity(intent);
+    }
+
 
 }
