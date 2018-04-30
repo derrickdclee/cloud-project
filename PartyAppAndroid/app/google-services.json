@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "170110871266",
+    "firebase_url": "https://partyappandroid-1524269011671.firebaseio.com",
+    "project_id": "partyappandroid-1524269011671",
+    "storage_bucket": "partyappandroid-1524269011671.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170110871266:android:64addbcd3abf6d15",
+        "android_client_info": {
+          "package_name": "edu.duke.compsci290.partyappandroid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "170110871266-36svki1gcu3t55juuhfol7ihoquu90dv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuB5J-hh-OQP3cIcWZ0JgLoG-NK5rdAbI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

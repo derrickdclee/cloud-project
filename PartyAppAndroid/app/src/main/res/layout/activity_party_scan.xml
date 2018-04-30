@@ -37,8 +37,17 @@
             android:id="@+id/scan_user_result_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:textAlignment="center"
             android:textSize="30sp" />
+
+        <Button
+            android:id="@+id/scan_qr_code_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@android:drawable/ic_menu_camera"
+            android:textAlignment="textStart" />
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

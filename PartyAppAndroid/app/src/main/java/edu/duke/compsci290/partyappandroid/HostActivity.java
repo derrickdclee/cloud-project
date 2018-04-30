@@ -1,6 +1,11 @@
 package edu.duke.compsci290.partyappandroid;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.PendingIntent;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
@@ -26,6 +31,8 @@ import com.facebook.GraphRequest;
 import com.facebook.GraphRequestBatch;
 import com.facebook.GraphResponse;
 import com.facebook.HttpMethod;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,23 +47,31 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import edu.duke.compsci290.partyappandroid.EventPackage.MyDeletePartyListener;
 import edu.duke.compsci290.partyappandroid.EventPackage.Party;
+import edu.duke.compsci290.partyappandroid.EventPackage.PartyInvite;
+import edu.duke.compsci290.partyappandroid.EventPackage.Service;
 import edu.duke.compsci290.partyappandroid.EventPackage.User;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
-public class HostActivity extends AppCompatActivity {
+public class HostActivity extends AppCompatActivity implements MyDeletePartyListener{
     private Button mNewPartyButton;
-    private ArrayList<Party> mPartiesHosting;
-    private ArrayList<User> mUsersFriends;
-    private HostAdapter mHostAdapter;
     private RecyclerView rv;
-    private RequestQueue queue;
-
+    private Service service;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_host);
-        queue = Volley.newRequestQueue(this);
-
+        setupretrofit();
         mNewPartyButton = findViewById(R.id.new_party_button);
         mNewPartyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,13 +80,10 @@ public class HostActivity extends AppCompatActivity {
             }
         });
         getUserParties();
-        mPartiesHosting = new ArrayList<>();
-        mUsersFriends = new ArrayList<>();
         rv = findViewById(R.id.parties_host_recycler_view);
-        //mHostAdapter = new HostAdapter(this, mPartiesHosting);
-        //rv.setAdapter(mHostAdapter);
-        //rv.setAdapter(new HostAdapter(this, mPartiesHosting));
+        Log.d("DEBUG", "WHYS this not getting called");
         rv.setLayoutManager(new LinearLayoutManager(this));
+
 
     }
     private void newPartyActivity(){
@@ -82,16 +94,19 @@ public class HostActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        getUserParties();
+
+        /*
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-
-        //nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
+        nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);*/
     }
     @Override
     public void onPause() {
         super.onPause();
+        /*
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        //nfcAdapter.disableForegroundDispatch(this);
+        nfcAdapter.disableForegroundDispatch(this);*/
     }
     @Override
     public void onNewIntent(Intent intent) {
@@ -101,90 +116,94 @@ public class HostActivity extends AppCompatActivity {
         }
     }
 
+
+    private void setupretrofit(){
+        Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
+        service = new Retrofit.Builder().baseUrl("http://party-app-dev.us-west-2.elasticbeanstalk.com").addCallAdapterFactory(RxJava2CallAdapterFactory.create()).addConverterFactory(GsonConverterFactory.create(gson)).build().create(Service.class);
+    }
+
+
     private void getUserParties(){
         String accessToken = "";
         SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
         if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
             accessToken = mPrefs.getString("access_token", "");
         }
+        Log.d("access token", accessToken);
+        Disposable toDispose = service.getPartiesHosting("Bearer "+accessToken)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(t -> {
+                    rv.setAdapter(new HostAdapter(this, (ArrayList<PartyInvite>) t));
+                });
+        compositeDisposable.add(toDispose);
+    }
 
-        Log.d("ACCESS_TOKEN", accessToken);
-        String url = "http://party-app-dev.us-west-2.elasticbeanstalk.com/parties/hosted/me";
-        final String finalAccessToken = accessToken;
-        StringRequest postRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>()
-                {
-                    @Override
-                    public void onResponse(String response) {
-                        // response
-                        Log.d("Response", response);
-                        try {
-                            JSONArray jsonArray = new JSONArray(response);
-                            for (int i=0;i<jsonArray.length();i++){
-                                JSONObject json = jsonArray.getJSONObject(i);
-                                String name = json.getString("name");
-                                String description = json.getString("description");
-                                String imageUrl = json.getString("image");
-                                String latString = json.getString("lat");
-                                String lngString = json.getString("lng");
-                                String startTime = json.getString("start_time");
-                                String endTime = json.getString("end_time");
-                                String id = json.getString("id");
-                                double lat = Double.parseDouble(latString);
-                                double lng = Double.parseDouble(lngString);
+    @Override
+    public void callback(String pid) {
+        String accessToken = "";
+        SharedPreferences mPrefs = getSharedPreferences("app_tokens", MODE_PRIVATE);
+        if (mPrefs.contains("access_token") && !mPrefs.getString("access_token", "").equals("")){
+            accessToken = mPrefs.getString("access_token", "");
+        }
+        DeletePartyFragment deletePartyFragment = new DeletePartyFragment();
+        deletePartyFragment.setPartyId(pid);
+        deletePartyFragment.setAuthToken(accessToken);
+        deletePartyFragment.setContext(this);
+        deletePartyFragment.setDeleteService(service);
+        deletePartyFragment.show(getFragmentManager(), "DeletePartyFragment");
+    }
 
-                                Geocoder geocoder;
-                                List<Address> addresses;
-                                geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+    public static class DeletePartyFragment extends DialogFragment {
+        private String partyId;
+        private Service deleteService;
+        private String authToken;
+        private Context mcontext;
+        public void setPartyId(String partyId){
+            this.partyId = partyId;
+        }
+        public void setAuthToken(String authtoken){
+            authToken = authtoken;
+        }
+        public void setDeleteService(Service deleteService){
+            this.deleteService = deleteService;
+        }
+        public void setContext(Context context){
+            mcontext = context;
+        }
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage("Delete Party?")
+                    .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            Log.d("DELETE", partyId);
+                            deleteService.deleteParty("Bearer "+authToken,
+                                    partyId).enqueue(new Callback<retrofit2.Response<Void>>() {
+                                @Override
+                                public void onResponse(Call<retrofit2.Response<Void>> call, retrofit2.Response<retrofit2.Response<Void>> response) {
+                                    ((HostActivity)mcontext).getUserParties();
+                                }
 
-                                addresses = geocoder.getFromLocation(lat, lng, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+                                @Override
+                                public void onFailure(Call<retrofit2.Response<Void>> call, Throwable t) {
 
-                                String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-                                String city = addresses.get(0).getLocality();
-                                String state = addresses.get(0).getAdminArea();
-                                /*
-                                String country = addresses.get(0).getCountryName();
-                                String postalCode = addresses.get(0).getPostalCode();
-                                String knownName = addresses.get(0).getFeatureName();*/
-                                String fullAddress = address+" "+city+" "+state;
-                                Party newParty = new Party(name, description, fullAddress, startTime, endTime);
-                                newParty.setImageUri(imageUrl);
-                                newParty.setPartyId(id);
-
-                                mPartiesHosting.add(newParty);
-                            }
-                            rv.setAdapter(new HostAdapter(getApplicationContext(), mPartiesHosting));
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                                }
+                            });
                         }
-
-
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // error
-                        Log.d("Error.Response", error.toString());
-                        Log.d("ACCESS_TOKEN", "whatever");
-                    }
-                }
-        )
-
-        {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("Authorization", "Bearer " + finalAccessToken);
-                return params;
-            }
-        };
-        queue.add(postRequest);
-
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                            Log.d("CANCEL", partyId);
+                        }
+                    });
+            // Create the AlertDialog object and return it
+            return builder.create();
+        }
     }
 
 }

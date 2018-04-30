@@ -8,7 +8,7 @@ android {
     compileSdkVersion 26
     defaultConfig {
         applicationId "edu.duke.compsci290.partyappandroid"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -16,6 +16,7 @@ android {
 
         buildConfigField "String", 'DjangoClientId', DJANGO_CLIENT_ID
         buildConfigField "String", 'DjangoSecretKey', DJANGO_SECRET_KEY
+        multiDexEnabled true
 
     }
     buildTypes {
@@ -29,6 +30,12 @@ android {
         sourceCompatibility 1.8
     }
 }
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs 'libs'
+    }
+}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -40,6 +47,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation 'com.facebook.android:facebook-android-sdk:[4,5)'
     implementation 'com.android.support:recyclerview-v7:26.1.0'
+    implementation 'com.android.support:support-v4:26.1.0'
     compile 'com.android.volley:volley:1.0.0'
     implementation 'com.squareup.picasso:picasso:2.71828'
 
@@ -59,4 +67,20 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-places:15.0.0'
 
+    compile 'com.journeyapps:zxing-android-embedded:3.4.0'
+
+    // This library handles authentication and authorization
+    compile 'com.spotify.android:auth:1.0.0-alpha'
+
+    // This library handles music playback
+    compile 'com.spotify.sdk:spotify-player-24-noconnect-2.20b@aar'
+
+    compile 'com.google.firebase:firebase-core:15.0.0'
+    compile 'com.google.firebase:firebase-auth:15.0.0'
+    compile 'com.google.firebase:firebase-firestore:15.0.0'
+    compile 'com.google.firebase:firebase-functions:15.0.0'
+
+    implementation 'com.firebaseui:firebase-ui-firestore:3.3.0'
+
 }
+apply plugin: 'com.google.gms.google-services'

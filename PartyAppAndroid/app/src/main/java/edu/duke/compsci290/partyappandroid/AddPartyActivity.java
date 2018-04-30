@@ -68,6 +68,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -531,13 +532,21 @@ public class AddPartyActivity extends AppCompatActivity {
         if (mPlace==null || mPartyName.getText().equals("")){
             return;
         }
+        Log.d("latitude", mPlace.getLatLng().latitude+"");
+        Log.d("lng", mPlace.getLatLng().longitude+"");
+
+        DecimalFormat df = new DecimalFormat("#.#######");
+        String latString = df.format(mPlace.getLatLng().latitude);
+        String lngString = df.format(mPlace.getLatLng().longitude);
+
 
         RequestBody name = RequestBody.create(MediaType.parse("text/plain"), mPartyName.getText().toString());
         RequestBody description = RequestBody.create(MediaType.parse("text/plain"), mPartyDescription.getText().toString());
-        RequestBody lat = RequestBody.create(MediaType.parse("text/plain"), mPlace.getLatLng().latitude+"");
-        RequestBody lng = RequestBody.create(MediaType.parse("text/plain"), mPlace.getLatLng().longitude+"");
+        RequestBody lat = RequestBody.create(MediaType.parse("text/plain"), latString);
+        RequestBody lng = RequestBody.create(MediaType.parse("text/plain"), lngString);
         RequestBody startDate = RequestBody.create(MediaType.parse("text/plain"), mHiddenStartDate.getText().toString());
         RequestBody endDate = RequestBody.create(MediaType.parse("text/plain"), mHiddenEndDate.getText().toString());
+
 
         retrofit2.Call<okhttp3.ResponseBody> req = service.postImage("Bearer "+accessToken, name, description, lat, lng, startDate, endDate, mImageRequestBody);
         req.enqueue(new Callback<ResponseBody>() {

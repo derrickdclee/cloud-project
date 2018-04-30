@@ -33,4 +33,15 @@
         android:layout_weight="0"
         android:background="@android:drawable/ic_delete" />
 
+    <Button
+        android:id="@+id/promote_to_bouncer_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="@drawable/com_facebook_button_background"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:text="Promote to Bouncer"
+        android:textColor="@color/cardview_light_background" />
+
 </LinearLayout>
