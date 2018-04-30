@@ -9,8 +9,10 @@ from rest_framework.reverse import reverse
 from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from rest_framework.exceptions import ValidationError
 from rest_condition import And, Or, Not
+from django.db.models import Q
 from django.contrib.auth.models import User
 from social_django.models import UserSocialAuth
+from geopy import Point, distance
 
 from project.api.permissions import *
 from project.api.models import *
@@ -25,7 +27,6 @@ def api_root(request, format=None):
         'invitations': reverse('invitation-list', request=request, format=format),
     })
 
-
 def lookup_user_with_facebook_id(facebook_id):
     try:
         user_fb = UserSocialAuth.objects.get(uid=facebook_id)
@@ -33,9 +34,11 @@ def lookup_user_with_facebook_id(facebook_id):
         raise ValidationError("The user does not exist.")
     return user_fb.user
 
-
 def lookup_facebook_id(user):
     return user.social_auth.get(provider='facebook').uid
+
+def convert_mile_to_kilometer(mile):
+    return mile * 1.609344
 
 
 class PartyList(generics.ListCreateAPIView):
@@ -51,6 +54,43 @@ class PartyList(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(host=self.request.user)
+
+    def get_queryset(self):
+        if not self.request.query_params:
+            return Party.objects.all()
+        else:
+            lat = self.request.query_params.get('lat')
+            lng = self.request.query_params.get('lng')
+            if lat is None or lng is None:
+                return Party.objects.none()
+
+            d = self.request.query_params.get('d')
+            if d is None:
+                d = 10.0
+            d = float(d)
+            d = convert_mile_to_kilometer(d)
+
+            origin = Point(lat, lng)
+            north = distance.VincentyDistance(kilometers=d).destination(origin, 0)
+            east = distance.VincentyDistance(kilometers=d).destination(origin, 90)
+            south = distance.VincentyDistance(kilometers=d).destination(origin, 180)
+            west = distance.VincentyDistance(kilometers=d).destination(origin, 270)
+
+            north_lat = north.latitude
+            east_lng = east.longitude
+            south_lat = south.latitude
+            west_lng = west.longitude
+
+            # edge case around the anti-meridian
+            if west_lng > east_lng:
+                print("west_lng: {0}, east_lng: {1}".format(west_lng, east_lng))
+                # it seems like you can't chain Q-object queries with regular queries
+                q = Party.objects \
+                    .filter(Q(lng__gte=west_lng) | Q(lng__lte=east_lng))
+                return q.filter(lat__gte=south_lat, lat__lte=north_lat)
+            else:
+                return Party.objects\
+                    .filter(lat__gte=south_lat, lat__lte=north_lat, lng__gte=west_lng, lng__lte=east_lng)
 
 
 class PartyDetail(generics.RetrieveUpdateDestroyAPIView):
