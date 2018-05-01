@@ -11,3 +11,4 @@ PartyAppAndroid/build
 .externalNativeBuild
 /Firebase/node_modules/
 /Firebase/functions/node_modules/
+/PartyAppAndroid/app/libs/
